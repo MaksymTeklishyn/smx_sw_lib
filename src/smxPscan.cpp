@@ -68,9 +68,9 @@ void smxPscan::parseAsciiFileName() {
     }
 
     // Debugging output to print parsed fields
-    std::cout << "Parsed readTime: " << readTime << " (" << formatReadTime() << ")" << std::endl;
-    std::cout << "Parsed asicId: " << asicId << std::endl;
-    std::cout << "Parsed nPulses: " << nPulses << std::endl;
+    std::cout << "readTime: " << readTime << " (" << formatReadTime() << ")" << std::endl;
+    std::cout << "asicId: " << asicId << std::endl;
+    std::cout << "nPulses: " << nPulses << std::endl;
 }
 
 // Helper function to convert readTime to a human-readable string
