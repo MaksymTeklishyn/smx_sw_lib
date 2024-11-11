@@ -2,7 +2,6 @@
 #define SMX_PSCAN_H
 
 #include <TTree.h>
-#include <TObject.h> // Include TObject for ROOT I/O compatibility
 #include <fstream>
 #include <string>
 #include <vector>
@@ -12,7 +11,7 @@
  * @class smxPscan
  * @brief Class for reading pulse scan data from an ASCII file and storing it in a ROOT TTree.
  */
-class smxPscan : public TObject {
+class smxPscan {
 private:
     TTree* pscanTree;                   ///< Internal field to store the TTree.
     std::string asciiFileName;          ///< Field to store the ASCII file name.
