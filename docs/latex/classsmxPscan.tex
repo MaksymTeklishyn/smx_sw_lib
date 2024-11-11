@@ -1,0 +1,451 @@
+\hypertarget{classsmxPscan}{}\doxysection{smx\+Pscan Class Reference}
+\label{classsmxPscan}\index{smxPscan@{smxPscan}}
+
+
+Class for reading pulse scan data from an ASCII file and storing it in a ROOT TTree.  
+
+
+
+
+{\ttfamily \#include $<$smx\+Pscan.\+h$>$}
+
+
+
+Inheritance diagram for smx\+Pscan\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=211pt]{classsmxPscan__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for smx\+Pscan\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=211pt]{classsmxPscan__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classsmxPscan_ad96937fc96c8371852ff3bfc08e81a8e}{smx\+Pscan}} ()
+\begin{DoxyCompactList}\small\item\em Constructor to initialize the TTree. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classsmxPscan_a9c3cb09bfd9ac205feaeb29521aa42f6}{$\sim$smx\+Pscan}} ()
+\begin{DoxyCompactList}\small\item\em Destructor to manage memory and close the file if necessary. \end{DoxyCompactList}\item 
+TTree $\ast$ \mbox{\hyperlink{classsmxPscan_aabdbcfcfd9d433044e8d4f58a5189ee8}{read\+Ascii\+File}} (const std\+::string \&filename)
+\begin{DoxyCompactList}\small\item\em Reads an ASCII file, extracts data, and fills the TTree. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classsmxPscan_af96fb65d702edfe622493be5628f887c}{write\+Root\+File}} (const std\+::string \&output\+File\+Name=\char`\"{}\char`\"{})
+\begin{DoxyCompactList}\small\item\em Writes the TTree to a ROOT file. \end{DoxyCompactList}\item 
+TTree $\ast$ \mbox{\hyperlink{classsmxPscan_ac864c44045c1c451e1528a01a28837c4}{get\+Tree}} () const
+\begin{DoxyCompactList}\small\item\em Getter to access the internal TTree. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{classsmxPscan_a6a783a3236474d04a030eb0a386883b6}{get\+Ascii\+File\+Name}} () const
+\begin{DoxyCompactList}\small\item\em Getter for the ASCII file name. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{classsmxPscan_a3ea3fa605fe2dfa7e267df7c6f297642}{get\+Ascii\+File\+Address}} () const
+\begin{DoxyCompactList}\small\item\em Getter for the ASCII file address. \end{DoxyCompactList}\item 
+const std\+::vector$<$ int $>$ \& \mbox{\hyperlink{classsmxPscan_ae425f917b003e39d1dd3fd72f467fb7a}{get\+Read\+Disc\+List}} () const
+\begin{DoxyCompactList}\small\item\em Getter for the read DISC\+\_\+\+LIST positions. \end{DoxyCompactList}\item 
+std\+::time\+\_\+t \mbox{\hyperlink{classsmxPscan_a078567cd2dd2ff88f5442336baf01fc5}{get\+Read\+Time}} () const
+\begin{DoxyCompactList}\small\item\em Getter for the parsed read time as epoch time. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{classsmxPscan_abe96a7f692f042bbc8439de110c8f5fc}{get\+Asic\+Id}} () const
+\begin{DoxyCompactList}\small\item\em Getter for the parsed ASIC ID. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{classsmxPscan_a79ba1a71b61eb0ede87bd132deb07d61}{get\+NPulses}} () const
+\begin{DoxyCompactList}\small\item\em Getter for the parsed number of pulses. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Class for reading pulse scan data from an ASCII file and storing it in a ROOT TTree. 
+
+Definition at line 15 of file smx\+Pscan.\+h.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classsmxPscan_ad96937fc96c8371852ff3bfc08e81a8e}\label{classsmxPscan_ad96937fc96c8371852ff3bfc08e81a8e}} 
+\index{smxPscan@{smxPscan}!smxPscan@{smxPscan}}
+\index{smxPscan@{smxPscan}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{smxPscan()}{smxPscan()}}
+{\footnotesize\ttfamily smx\+Pscan\+::smx\+Pscan (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor to initialize the TTree. 
+
+
+
+Definition at line 11 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{11                    \{}
+\DoxyCodeLine{12     pscanTree = \textcolor{keyword}{new} TTree(\textcolor{stringliteral}{"{}pscanTree"{}}, \textcolor{stringliteral}{"{}Tree for pulse scan data"{}});}
+\DoxyCodeLine{13 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_a9c3cb09bfd9ac205feaeb29521aa42f6}\label{classsmxPscan_a9c3cb09bfd9ac205feaeb29521aa42f6}} 
+\index{smxPscan@{smxPscan}!````~smxPscan@{$\sim$smxPscan}}
+\index{````~smxPscan@{$\sim$smxPscan}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{$\sim$smxPscan()}{~smxPscan()}}
+{\footnotesize\ttfamily smx\+Pscan\+::$\sim$smx\+Pscan (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destructor to manage memory and close the file if necessary. 
+
+
+
+Definition at line 16 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{16                     \{}
+\DoxyCodeLine{17     \textcolor{keywordflow}{if} (pscanTree) \{}
+\DoxyCodeLine{18         \textcolor{keyword}{delete} pscanTree;}
+\DoxyCodeLine{19     \}}
+\DoxyCodeLine{20     \textcolor{keywordflow}{if} (asciiFile.is\_open()) \{}
+\DoxyCodeLine{21         asciiFile.close();}
+\DoxyCodeLine{22     \}}
+\DoxyCodeLine{23 \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classsmxPscan_a3ea3fa605fe2dfa7e267df7c6f297642}\label{classsmxPscan_a3ea3fa605fe2dfa7e267df7c6f297642}} 
+\index{smxPscan@{smxPscan}!getAsciiFileAddress@{getAsciiFileAddress}}
+\index{getAsciiFileAddress@{getAsciiFileAddress}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getAsciiFileAddress()}{getAsciiFileAddress()}}
+{\footnotesize\ttfamily std\+::string smx\+Pscan\+::get\+Ascii\+File\+Address (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter for the ASCII file address. 
+
+\begin{DoxyReturn}{Returns}
+The address/path of the ASCII file. 
+\end{DoxyReturn}
+
+
+Definition at line 232 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{232                                               \{}
+\DoxyCodeLine{233     \textcolor{keywordflow}{return} asciiFileAddress;}
+\DoxyCodeLine{234 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_a6a783a3236474d04a030eb0a386883b6}\label{classsmxPscan_a6a783a3236474d04a030eb0a386883b6}} 
+\index{smxPscan@{smxPscan}!getAsciiFileName@{getAsciiFileName}}
+\index{getAsciiFileName@{getAsciiFileName}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getAsciiFileName()}{getAsciiFileName()}}
+{\footnotesize\ttfamily std\+::string smx\+Pscan\+::get\+Ascii\+File\+Name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter for the ASCII file name. 
+
+\begin{DoxyReturn}{Returns}
+The name of the ASCII file. 
+\end{DoxyReturn}
+
+
+Definition at line 227 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{227                                            \{}
+\DoxyCodeLine{228     \textcolor{keywordflow}{return} asciiFileName;}
+\DoxyCodeLine{229 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_abe96a7f692f042bbc8439de110c8f5fc}\label{classsmxPscan_abe96a7f692f042bbc8439de110c8f5fc}} 
+\index{smxPscan@{smxPscan}!getAsicId@{getAsicId}}
+\index{getAsicId@{getAsicId}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getAsicId()}{getAsicId()}}
+{\footnotesize\ttfamily std\+::string smx\+Pscan\+::get\+Asic\+Id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter for the parsed ASIC ID. 
+
+\begin{DoxyReturn}{Returns}
+The ASIC ID as a string. 
+\end{DoxyReturn}
+
+
+Definition at line 96 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{96                                     \{}
+\DoxyCodeLine{97     \textcolor{keywordflow}{return} asicId;}
+\DoxyCodeLine{98 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_a79ba1a71b61eb0ede87bd132deb07d61}\label{classsmxPscan_a79ba1a71b61eb0ede87bd132deb07d61}} 
+\index{smxPscan@{smxPscan}!getNPulses@{getNPulses}}
+\index{getNPulses@{getNPulses}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getNPulses()}{getNPulses()}}
+{\footnotesize\ttfamily int smx\+Pscan\+::get\+NPulses (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter for the parsed number of pulses. 
+
+\begin{DoxyReturn}{Returns}
+The number of pulses. 
+\end{DoxyReturn}
+
+
+Definition at line 100 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{100                                \{}
+\DoxyCodeLine{101     \textcolor{keywordflow}{return} nPulses;}
+\DoxyCodeLine{102 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_ae425f917b003e39d1dd3fd72f467fb7a}\label{classsmxPscan_ae425f917b003e39d1dd3fd72f467fb7a}} 
+\index{smxPscan@{smxPscan}!getReadDiscList@{getReadDiscList}}
+\index{getReadDiscList@{getReadDiscList}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getReadDiscList()}{getReadDiscList()}}
+{\footnotesize\ttfamily const std\+::vector$<$ int $>$ \& smx\+Pscan\+::get\+Read\+Disc\+List (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter for the read DISC\+\_\+\+LIST positions. 
+
+\begin{DoxyReturn}{Returns}
+A reference to the vector containing DISC\+\_\+\+LIST positions. 
+\end{DoxyReturn}
+
+
+Definition at line 237 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{237                                                       \{}
+\DoxyCodeLine{238     \textcolor{keywordflow}{return} readDiscList;}
+\DoxyCodeLine{239 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_a078567cd2dd2ff88f5442336baf01fc5}\label{classsmxPscan_a078567cd2dd2ff88f5442336baf01fc5}} 
+\index{smxPscan@{smxPscan}!getReadTime@{getReadTime}}
+\index{getReadTime@{getReadTime}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getReadTime()}{getReadTime()}}
+{\footnotesize\ttfamily std\+::time\+\_\+t smx\+Pscan\+::get\+Read\+Time (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter for the parsed read time as epoch time. 
+
+\begin{DoxyReturn}{Returns}
+The read time as a std\+::time\+\_\+t value. 
+\end{DoxyReturn}
+
+
+Definition at line 91 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{91                                       \{}
+\DoxyCodeLine{92     \textcolor{keywordflow}{return} readTime;}
+\DoxyCodeLine{93 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_ac864c44045c1c451e1528a01a28837c4}\label{classsmxPscan_ac864c44045c1c451e1528a01a28837c4}} 
+\index{smxPscan@{smxPscan}!getTree@{getTree}}
+\index{getTree@{getTree}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{getTree()}{getTree()}}
+{\footnotesize\ttfamily TTree $\ast$ smx\+Pscan\+::get\+Tree (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Getter to access the internal TTree. 
+
+\begin{DoxyReturn}{Returns}
+A pointer to the TTree. 
+\end{DoxyReturn}
+
+
+Definition at line 222 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{222                                \{}
+\DoxyCodeLine{223     \textcolor{keywordflow}{return} pscanTree;}
+\DoxyCodeLine{224 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_aabdbcfcfd9d433044e8d4f58a5189ee8}\label{classsmxPscan_aabdbcfcfd9d433044e8d4f58a5189ee8}} 
+\index{smxPscan@{smxPscan}!readAsciiFile@{readAsciiFile}}
+\index{readAsciiFile@{readAsciiFile}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{readAsciiFile()}{readAsciiFile()}}
+{\footnotesize\ttfamily TTree $\ast$ smx\+Pscan\+::read\+Ascii\+File (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{filename }\end{DoxyParamCaption})}
+
+
+
+Reads an ASCII file, extracts data, and fills the TTree. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & The name of the ASCII file to read. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the filled TTree. 
+\end{DoxyReturn}
+
+
+Definition at line 105 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{105                                                         \{}
+\DoxyCodeLine{106     \textcolor{comment}{// Use std::filesystem to extract the file name and path}}
+\DoxyCodeLine{107     std::filesystem::path filePath(filename);}
+\DoxyCodeLine{108     asciiFileName = filePath.filename().string();}
+\DoxyCodeLine{109     asciiFileAddress = filePath.parent\_path().string();}
+\DoxyCodeLine{110     parseAsciiFileName();}
+\DoxyCodeLine{111 }
+\DoxyCodeLine{112     \textcolor{comment}{// Open the text file}}
+\DoxyCodeLine{113     asciiFile.open(filename);}
+\DoxyCodeLine{114     \textcolor{keywordflow}{if} (!asciiFile.is\_open()) \{}
+\DoxyCodeLine{115         std::cerr << \textcolor{stringliteral}{"{}Error opening file: "{}} << filename << std::endl;}
+\DoxyCodeLine{116         \textcolor{keywordflow}{return} \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{117     \}}
+\DoxyCodeLine{118 }
+\DoxyCodeLine{119     \textcolor{comment}{// Parse header line to extract DISC\_LIST positions}}
+\DoxyCodeLine{120     std::string line;}
+\DoxyCodeLine{121     std::getline(asciiFile, line);}
+\DoxyCodeLine{122     parseHeaderLine(line);}
+\DoxyCodeLine{123 }
+\DoxyCodeLine{124     \textcolor{comment}{// Variables for TTree branches}}
+\DoxyCodeLine{125     \textcolor{keywordtype}{int} pulse, channel;}
+\DoxyCodeLine{126     \textcolor{keywordtype}{int} adc[31] = \{0\};  \textcolor{comment}{// Array of fixed size 31, initialized to 0}}
+\DoxyCodeLine{127     \textcolor{keywordtype}{int} tcomp;          \textcolor{comment}{// Timing comparator}}
+\DoxyCodeLine{128 }
+\DoxyCodeLine{129     \textcolor{comment}{// Set branch addresses}}
+\DoxyCodeLine{130     pscanTree-\/>Branch(\textcolor{stringliteral}{"{}pulse"{}}, \&pulse, \textcolor{stringliteral}{"{}pulse/I"{}});}
+\DoxyCodeLine{131     pscanTree-\/>Branch(\textcolor{stringliteral}{"{}channel"{}}, \&channel, \textcolor{stringliteral}{"{}channel/I"{}});}
+\DoxyCodeLine{132     pscanTree-\/>Branch(\textcolor{stringliteral}{"{}ADC"{}}, adc, \textcolor{stringliteral}{"{}ADC[31]/I"{}});}
+\DoxyCodeLine{133     pscanTree-\/>Branch(\textcolor{stringliteral}{"{}tcomp"{}}, \&tcomp, \textcolor{stringliteral}{"{}tcomp/I"{}});}
+\DoxyCodeLine{134 }
+\DoxyCodeLine{135     \textcolor{comment}{// Regex pattern to parse each data line}}
+\DoxyCodeLine{136     std::regex data\_pattern(R\textcolor{stringliteral}{"{}(vp\(\backslash\)s+(\(\backslash\)d+)\(\backslash\)s+ch\(\backslash\)s+(\(\backslash\)d+):\(\backslash\)s+((\(\backslash\)d+\(\backslash\)s*)+))"{});}}
+\DoxyCodeLine{137 \textcolor{stringliteral}{}}
+\DoxyCodeLine{138 \textcolor{stringliteral}{    }\textcolor{comment}{// Read and parse each line of data}}
+\DoxyCodeLine{139     \textcolor{keywordflow}{while} (std::getline(asciiFile, line)) \{}
+\DoxyCodeLine{140         std::smatch data\_match;}
+\DoxyCodeLine{141         \textcolor{keywordflow}{if} (std::regex\_match(line, data\_match, data\_pattern)) \{}
+\DoxyCodeLine{142             \textcolor{comment}{// Extract pulse and channel}}
+\DoxyCodeLine{143             pulse = std::stoi(data\_match[1]);}
+\DoxyCodeLine{144             channel = std::stoi(data\_match[2]);}
+\DoxyCodeLine{145 }
+\DoxyCodeLine{146             \textcolor{comment}{// Reset adc array to zero for each entry}}
+\DoxyCodeLine{147             std::fill(std::begin(adc), std::end(adc), 0);}
+\DoxyCodeLine{148 }
+\DoxyCodeLine{149             \textcolor{comment}{// Extract ADC values into a string and parse them into the array}}
+\DoxyCodeLine{150             std::string adc\_values\_str = data\_match[3];}
+\DoxyCodeLine{151             std::istringstream iss(adc\_values\_str);}
+\DoxyCodeLine{152             \textcolor{keywordtype}{int} value;}
+\DoxyCodeLine{153             \textcolor{keywordtype}{size\_t} index = 0;}
+\DoxyCodeLine{154 \textcolor{comment}{/*}}
+\DoxyCodeLine{155 \textcolor{comment}{            // Debugging output for parsed pulse and channel}}
+\DoxyCodeLine{156 \textcolor{comment}{            std::cout << "{}Reading line: "{} << line << std::endl;}}
+\DoxyCodeLine{157 \textcolor{comment}{            std::cout << "{}Pulse: "{} << pulse << "{}, Channel: "{} << channel << std::endl;}}
+\DoxyCodeLine{158 \textcolor{comment}{*/}}
+\DoxyCodeLine{159             \textcolor{comment}{// Read ADC values up to the second-\/to-\/last value for adc, and assign the last to tcomp}}
+\DoxyCodeLine{160             \textcolor{keywordflow}{while} (iss >> value) \{}
+\DoxyCodeLine{161                 \textcolor{keywordflow}{if} (index < readDiscList.size() -\/ 1 \&\& readDiscList[index] < 31) \{}
+\DoxyCodeLine{162                     adc[readDiscList[index]] = value;}
+\DoxyCodeLine{163                 \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{164                     tcomp = value;  \textcolor{comment}{// Last value as timing comparator}}
+\DoxyCodeLine{165                 \}}
+\DoxyCodeLine{166                 ++index;}
+\DoxyCodeLine{167             \}}
+\DoxyCodeLine{168 \textcolor{comment}{/*}}
+\DoxyCodeLine{169 \textcolor{comment}{            // Print the adc array for debugging}}
+\DoxyCodeLine{170 \textcolor{comment}{            std::cout << "{}ADC values: "{};}}
+\DoxyCodeLine{171 \textcolor{comment}{            for (int i = 0; i < 31; ++i) \{}}
+\DoxyCodeLine{172 \textcolor{comment}{                std::cout << adc[i] << "{} "{};}}
+\DoxyCodeLine{173 \textcolor{comment}{            \}}}
+\DoxyCodeLine{174 \textcolor{comment}{            std::cout << std::endl;}}
+\DoxyCodeLine{175 \textcolor{comment}{}}
+\DoxyCodeLine{176 \textcolor{comment}{            // Debugging output for timing comparator}}
+\DoxyCodeLine{177 \textcolor{comment}{            std::cout << "{}Timing comparator: "{} << tcomp << std::endl;}}
+\DoxyCodeLine{178 \textcolor{comment}{*/}}
+\DoxyCodeLine{179             \textcolor{comment}{// Fill the TTree}}
+\DoxyCodeLine{180             pscanTree-\/>Fill();}
+\DoxyCodeLine{181         \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{182             std::cerr << \textcolor{stringliteral}{"{}Failed to match the line: "{}} << line << std::endl;}
+\DoxyCodeLine{183         \}}
+\DoxyCodeLine{184     \}}
+\DoxyCodeLine{185 }
+\DoxyCodeLine{186     \textcolor{comment}{// Close the file}}
+\DoxyCodeLine{187     asciiFile.close();}
+\DoxyCodeLine{188 }
+\DoxyCodeLine{189     \textcolor{comment}{// Return the filled TTree}}
+\DoxyCodeLine{190     \textcolor{keywordflow}{return} pscanTree;}
+\DoxyCodeLine{191 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classsmxPscan_af96fb65d702edfe622493be5628f887c}\label{classsmxPscan_af96fb65d702edfe622493be5628f887c}} 
+\index{smxPscan@{smxPscan}!writeRootFile@{writeRootFile}}
+\index{writeRootFile@{writeRootFile}!smxPscan@{smxPscan}}
+\doxysubsubsection{\texorpdfstring{writeRootFile()}{writeRootFile()}}
+{\footnotesize\ttfamily void smx\+Pscan\+::write\+Root\+File (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{output\+File\+Name = {\ttfamily \char`\"{}\char`\"{}} }\end{DoxyParamCaption})}
+
+
+
+Writes the TTree to a ROOT file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em output\+File\+Name} & The name of the output ROOT file. If empty, a default name based on the input file name is used. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 194 of file smx\+Pscan.\+cpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{194                                                             \{}
+\DoxyCodeLine{195     std::string outputFile;}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197     \textcolor{keywordflow}{if} (outputFileName.empty()) \{}
+\DoxyCodeLine{198         \textcolor{comment}{// Create an output file name based on the input file name}}
+\DoxyCodeLine{199         std::filesystem::path filePath(asciiFileName);}
+\DoxyCodeLine{200         }
+\DoxyCodeLine{201         \textcolor{comment}{// Remove the original extension and append "{}\_output.root"{}}}
+\DoxyCodeLine{202         std::string baseName = filePath.stem().string(); \textcolor{comment}{// Get the filename without extension}}
+\DoxyCodeLine{203         outputFile = asciiFileAddress + \textcolor{stringliteral}{"{}/"{}} + baseName + \textcolor{stringliteral}{"{}\_output.root"{}};}
+\DoxyCodeLine{204     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{205         outputFile = outputFileName;}
+\DoxyCodeLine{206     \}}
+\DoxyCodeLine{207 }
+\DoxyCodeLine{208     \textcolor{comment}{// Create and write the TTree to the ROOT file}}
+\DoxyCodeLine{209     TFile file(outputFile.c\_str(), \textcolor{stringliteral}{"{}RECREATE"{}});}
+\DoxyCodeLine{210     \textcolor{keywordflow}{if} (file.IsOpen()) \{}
+\DoxyCodeLine{211         std::cout << \textcolor{stringliteral}{"{}Writing TTree to "{}} << outputFile << std::endl;}
+\DoxyCodeLine{212         pscanTree-\/>Write();}
+\DoxyCodeLine{213         file.Close();}
+\DoxyCodeLine{214         std::cout << \textcolor{stringliteral}{"{}File written successfully."{}} << std::endl;}
+\DoxyCodeLine{215     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{216         std::cerr << \textcolor{stringliteral}{"{}Error creating output file: "{}} << outputFile << std::endl;}
+\DoxyCodeLine{217     \}}
+\DoxyCodeLine{218 \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{smxPscan_8h}{smx\+Pscan.\+h}}\item 
+src/\mbox{\hyperlink{smxPscan_8cpp}{smx\+Pscan.\+cpp}}\end{DoxyCompactItemize}

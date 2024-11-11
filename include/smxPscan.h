@@ -8,54 +8,104 @@
 #include <vector>
 #include <ctime>  // For std::time_t and std::tm
 
+/**
+ * @class smxPscan
+ * @brief Class for reading pulse scan data from an ASCII file and storing it in a ROOT TTree.
+ */
 class smxPscan : public TObject {
 private:
-    TTree* pscanTree;                   // Internal field to store the TTree
-    std::string asciiFileName;          // Field to store the ASCII file name
-    std::string asciiFileAddress;       // Field to store the ASCII file address
-    std::ifstream asciiFile;            // Field for the input file stream
-    std::vector<int> readDiscList;      // Field to store DISC_LIST positions
+    TTree* pscanTree;                   ///< Internal field to store the TTree.
+    std::string asciiFileName;          ///< Field to store the ASCII file name.
+    std::string asciiFileAddress;       ///< Field to store the ASCII file address.
+    std::ifstream asciiFile;            ///< Field for the input file stream.
+    std::vector<int> readDiscList;      ///< Field to store DISC_LIST positions.
 
     // Parsed data fields
-    std::time_t readTime;               // Parsed read time as a numeric value (epoch time)
-    std::string asicId;                 // Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02")
-    int nPulses;                        // Parsed number of pulses (e.g., 100)
+    std::time_t readTime;               ///< Parsed read time as a numeric value (epoch time).
+    std::string asicId;                 ///< Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02").
+    int nPulses;                        ///< Parsed number of pulses (e.g., 100).
 
-    // Helper function to parse the first line and populate readDiscList
+    /**
+     * @brief Helper function to parse the first line of the ASCII file and populate readDiscList.
+     * @param line The header line to be parsed.
+     */
     void parseHeaderLine(const std::string& line);
 
-    // Helper function to parse the asciiFileName
+    /**
+     * @brief Helper function to parse the ASCII file name and extract relevant fields (read time, ASIC ID, and number of pulses).
+     */
     void parseAsciiFileName();
 
-    // Helper function to convert readTime to a human-readable string
+    /**
+     * @brief Helper function to convert readTime to a human-readable string format.
+     * @return A string representing the formatted read time.
+     */
     std::string formatReadTime() const;
 
 public:
-    // Constructor to initialize the TTree
+    /**
+     * @brief Constructor to initialize the TTree.
+     */
     smxPscan();
 
-    // Destructor to manage memory and close the file if necessary
+    /**
+     * @brief Destructor to manage memory and close the file if necessary.
+     */
     ~smxPscan();
 
-    // Method to read an ASCII file and fill the TTree
+    /**
+     * @brief Reads an ASCII file, extracts data, and fills the TTree.
+     * @param filename The name of the ASCII file to read.
+     * @return A pointer to the filled TTree.
+     */
     TTree* readAsciiFile(const std::string& filename);
 
-    // Method to write the TTree to a ROOT file
+    /**
+     * @brief Writes the TTree to a ROOT file.
+     * @param outputFileName The name of the output ROOT file. If empty, a default name based on the input file name is used.
+     */
     void writeRootFile(const std::string& outputFileName = "");
 
-    // Getter to access the internal TTree
+    /**
+     * @brief Getter to access the internal TTree.
+     * @return A pointer to the TTree.
+     */
     TTree* getTree() const;
 
-    // Getters for the file name and address
+    /**
+     * @brief Getter for the ASCII file name.
+     * @return The name of the ASCII file.
+     */
     std::string getAsciiFileName() const;
+
+    /**
+     * @brief Getter for the ASCII file address.
+     * @return The address/path of the ASCII file.
+     */
     std::string getAsciiFileAddress() const;
 
-    // Getter for read DISC_LIST positions
+    /**
+     * @brief Getter for the read DISC_LIST positions.
+     * @return A reference to the vector containing DISC_LIST positions.
+     */
     const std::vector<int>& getReadDiscList() const;
 
-    // Getters for parsed data fields
+    /**
+     * @brief Getter for the parsed read time as epoch time.
+     * @return The read time as a std::time_t value.
+     */
     std::time_t getReadTime() const;
+
+    /**
+     * @brief Getter for the parsed ASIC ID.
+     * @return The ASIC ID as a string.
+     */
     std::string getAsicId() const;
+
+    /**
+     * @brief Getter for the parsed number of pulses.
+     * @return The number of pulses.
+     */
     int getNPulses() const;
 };
 
