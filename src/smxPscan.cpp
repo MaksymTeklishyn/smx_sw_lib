@@ -1,5 +1,6 @@
 #include "smxPscan.h"
 #include <TFile.h>
+#include <TNamed.h>
 #include <iostream>
 #include <sstream>
 #include <regex>
@@ -190,28 +191,31 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     return pscanTree;
 }
 
-// Method to write the TTree to a ROOT file
+// Method to write the TTree and asicId to a ROOT file
 void smxPscan::writeRootFile(const std::string& outputFileName) {
     std::string outputFile;
 
     if (outputFileName.empty()) {
         // Create an output file name based on the input file name
-        std::filesystem::path filePath(asciiFileName);
-        
+        std::filesystem::path filePath(asciiFileName); 
+                    
         // Remove the original extension and append "_output.root"
         std::string baseName = filePath.stem().string(); // Get the filename without extension
         outputFile = asciiFileAddress + "/" + baseName + "_output.root";
-    } else {
+    } else {        
         outputFile = outputFileName;
     }
-
-    // Create and write the TTree to the ROOT file
-    TFile file(outputFile.c_str(), "RECREATE");
+                          
+    // Create and write the TTree to the ROOT file         
+    TFile file(outputFile.c_str(), "RECREATE");   
     if (file.IsOpen()) {
-        std::cout << "Writing TTree to " << outputFile << std::endl;
         pscanTree->Write();
+
+        // Convert asicId to TString and write it to the ROOT file
+        TString asicIdStr(asicId.c_str());
+        file.WriteObject(&asicIdStr, "asicId");
+
         file.Close();
-        std::cout << "File written successfully." << std::endl;
     } else {
         std::cerr << "Error creating output file: " << outputFile << std::endl;
     }
