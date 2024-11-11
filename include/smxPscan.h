@@ -3,6 +3,7 @@
 
 #include <TTree.h>
 #include <TString.h>
+#include <TArrayI.h> 
 #include <fstream>
 #include <string>
 #include <vector>
@@ -18,12 +19,12 @@ private:
     std::string asciiFileName;          ///< Field to store the ASCII file name.
     std::string asciiFileAddress;       ///< Field to store the ASCII file address.
     std::ifstream asciiFile;            ///< Field for the input file stream.
-    std::vector<int> readDiscList;      ///< Field to store DISC_LIST positions.
+    TArrayI readDiscList;               ///< Field to store DISC_LIST positions.
 
     // Parsed data fields
     std::time_t readTime;               ///< Parsed read time as a numeric value (epoch time).
     TString asicId;                     ///< Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02").
-    int nPulses;                        ///< Parsed number of pulses (e.g., 100).
+    int nPulses = 100;                  ///< Parsed number of pulses (e.g., 100).
 
     /**
      * @brief Helper function to parse the first line of the ASCII file and populate readDiscList.
@@ -41,6 +42,18 @@ private:
      * @return A string representing the formatted read time.
      */
     std::string formatReadTime() const;
+
+    /**
+     * @brief Logs an error message to standard error output.
+     * @param message The error message to log.
+     */
+    void logError(const std::string& message) const;
+
+    /**
+     * @brief Helper function to generate the default output file name based on the ASCII file name.
+     * @return The generated default output file name.
+     */
+    std::string generateDefaultOutputFileName() const;
 
 public:
     /**
@@ -70,7 +83,7 @@ public:
      * @brief Getter to access the internal TTree.
      * @return A pointer to the TTree.
      */
-    TTree* getTree() const;
+    TTree* getDataTree() const;
 
     /**
      * @brief Getter for the ASCII file name.
@@ -88,7 +101,7 @@ public:
      * @brief Getter for the read DISC_LIST positions.
      * @return A reference to the vector containing DISC_LIST positions.
      */
-    const std::vector<int>& getReadDiscList() const;
+    const TArrayI& getReadDiscList() const;
 
     /**
      * @brief Getter for the parsed read time as epoch time.
@@ -98,7 +111,7 @@ public:
 
     /**
      * @brief Getter for the parsed ASIC ID.
-     * @return The ASIC ID as a string.
+     * @return The ASIC ID as a TString.
      */
     TString getAsicId() const;
 

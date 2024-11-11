@@ -1,45 +1,47 @@
 #include "smxPscan.h"
 #include <TFile.h>
 #include <TNamed.h>
+#include <TParameter.h>
 #include <iostream>
 #include <sstream>
 #include <regex>
 #include <filesystem> // For handling file paths
 
-// ROOT macro for class implementation
-
 // Constructor to initialize the TTree
-smxPscan::smxPscan() {
-    pscanTree = new TTree("pscanTree", "Tree for pulse scan data");
-}
+smxPscan::smxPscan() : pscanTree(new TTree("pscanTree", "Tree for pulse scan data")) {}
 
 // Destructor to manage memory and close the file if necessary
 smxPscan::~smxPscan() {
-    if (pscanTree) {
-        delete pscanTree;
-    }
+    delete pscanTree;
     if (asciiFile.is_open()) {
         asciiFile.close();
     }
 }
 
-// Helper function to parse the first line and populate readDiscList
 void smxPscan::parseHeaderLine(const std::string& line) {
     std::regex disc_list_regex(R"(\bDISC_LIST:\[(.*?)\])");
     std::smatch match;
+    std::vector<int> discPositions;
+
     if (std::regex_search(line, match, disc_list_regex)) {
         std::stringstream ss(match[1]);
         int pos;
         while (ss >> pos) {
-            readDiscList.push_back(pos);
+            discPositions.push_back(pos);
             if (ss.peek() == ',') ss.ignore();
+        }
+
+        // Resize readDiscList to match discPositions and copy elements
+        readDiscList.Set(discPositions.size());
+        for (size_t i = 0; i < discPositions.size(); ++i) {
+            readDiscList[i] = discPositions[i];
         }
     }
 
-    // Debugging output to print readDiscList
+    // Debugging output to confirm positions
     std::cout << "Parsed DISC_LIST positions: ";
-    for (const auto& pos : readDiscList) {
-        std::cout << pos << " ";
+    for (int i = 0; i < readDiscList.GetSize(); ++i) {
+        std::cout << readDiscList[i] << " ";
     }
     std::cout << std::endl;
 }
@@ -66,7 +68,7 @@ void smxPscan::parseAsciiFileName() {
         // Convert std::tm to std::time_t (epoch time)
         readTime = std::mktime(&timeStruct);
         if (readTime == -1) {
-            std::cerr << "Error: Failed to convert time." << std::endl;
+            logError("Failed to convert time.");
         }
     }
 
@@ -88,18 +90,16 @@ std::string smxPscan::formatReadTime() const {
     return oss.str();
 }
 
-// Getter for readTime as epoch time
-std::time_t smxPscan::getReadTime() const {
-    return readTime;
+// Method to log errors for consistency
+void smxPscan::logError(const std::string& message) const {
+    std::cerr << "Error: " << message << std::endl;
 }
 
-// Other getters
-TString smxPscan::getAsicId() const {
-    return asicId;
-}
-
-int smxPscan::getNPulses() const {
-    return nPulses;
+// Helper function to generate default output file name based on ASCII file name
+std::string smxPscan::generateDefaultOutputFileName() const {
+    std::filesystem::path filePath(asciiFileName);
+    std::string baseName = filePath.stem().string();
+    return asciiFileAddress + "/" + baseName + "_output.root";
 }
 
 // Method to read an ASCII file and fill the TTree
@@ -113,7 +113,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     // Open the text file
     asciiFile.open(filename);
     if (!asciiFile.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        logError("Opening file: " + filename);
         return nullptr;
     }
 
@@ -152,35 +152,21 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
             std::istringstream iss(adc_values_str);
             int value;
             size_t index = 0;
-/*
-            // Debugging output for parsed pulse and channel
-            std::cout << "Reading line: " << line << std::endl;
-            std::cout << "Pulse: " << pulse << ", Channel: " << channel << std::endl;
-*/
+
             // Read ADC values up to the second-to-last value for adc, and assign the last to tcomp
             while (iss >> value) {
-                if (index < readDiscList.size() - 1 && readDiscList[index] < 31) {
+                if (index < readDiscList.GetSize() - 1 && readDiscList[index] < 31) {
                     adc[readDiscList[index]] = value;
                 } else {
                     tcomp = value;  // Last value as timing comparator
                 }
                 ++index;
             }
-/*
-            // Print the adc array for debugging
-            std::cout << "ADC values: ";
-            for (int i = 0; i < 31; ++i) {
-                std::cout << adc[i] << " ";
-            }
-            std::cout << std::endl;
 
-            // Debugging output for timing comparator
-            std::cout << "Timing comparator: " << tcomp << std::endl;
-*/
             // Fill the TTree
             pscanTree->Fill();
         } else {
-            std::cerr << "Failed to match the line: " << line << std::endl;
+            logError("Failed to match the line: " + line);
         }
     }
 
@@ -191,38 +177,29 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     return pscanTree;
 }
 
-// Method to write the TTree and asicId to a ROOT file
+// Method to write the TTree and metadata to a ROOT file
 void smxPscan::writeRootFile(const std::string& outputFileName) {
-    std::string outputFile;
+    std::string outputFile = outputFileName.empty() ? generateDefaultOutputFileName() : outputFileName;
+    TFile file(outputFile.c_str(), "RECREATE");
 
-    if (outputFileName.empty()) {
-        // Create an output file name based on the input file name
-        std::filesystem::path filePath(asciiFileName); 
-                    
-        // Remove the original extension and append "_output.root"
-        std::string baseName = filePath.stem().string(); // Get the filename without extension
-        outputFile = asciiFileAddress + "/" + baseName + "_output.root";
-    } else {        
-        outputFile = outputFileName;
-    }
-                          
-    // Create and write the TTree to the ROOT file         
-    TFile file(outputFile.c_str(), "RECREATE");   
     if (file.IsOpen()) {
         pscanTree->Write();
-
-        // Convert asicId to TString and write it to the ROOT file
+	// Write metadata:
         file.WriteObject(&asicId, "asicId");
+        file.WriteObject(&readDiscList, "readDiscList");
+        TParameter<int> nPulsesParam("nPulses", nPulses);
+        nPulsesParam.Write();
 
         file.Close();
+        std::cout << "File written successfully to: " << outputFile << std::endl;
     } else {
-        std::cerr << "Error creating output file: " << outputFile << std::endl;
+        logError("Failed to create output file: " + outputFile);
     }
 }
 
 
 // Getter to access the internal TTree
-TTree* smxPscan::getTree() const {
+TTree* smxPscan::getDataTree() const {
     return pscanTree;
 }
 
@@ -237,7 +214,7 @@ std::string smxPscan::getAsciiFileAddress() const {
 }
 
 // Getter for read DISC_LIST positions
-const std::vector<int>& smxPscan::getReadDiscList() const {
+const TArrayI& smxPscan::getReadDiscList() const {
     return readDiscList;
 }
 
