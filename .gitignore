@@ -16,10 +16,6 @@
 *.dylib
 *.dll
 
-# Fortran module files
-*.mod
-*.smod
-
 # Compiled Static libraries
 *.lai
 *.la
@@ -30,3 +26,78 @@
 *.exe
 *.out
 *.app
+
+# Debug files
+*.debug
+
+# Fortran module files
+*.mod
+*.smod
+
+# Doxygen generated documentation
+/html/
+/latex/
+/man/
+/rtf/
+/xml/
+/doxygen/
+
+# Doxygen log files
+doxygen.log
+*.tag
+
+# Logs and temporary files
+*.log
+*.tmp
+*.aux
+*.out
+
+# Backup files created by editors
+*~
+*.bak
+*.swp
+*.swo
+*.orig
+
+# IDE-specific files
+.vscode/
+.idea/
+*.iml
+
+# Python cache and environment files
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Node.js files
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# macOS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Package files
+*.tar.gz
+*.zip
+*.7z
+*.tar.bz2
+*.tgz
+
+# Miscellaneous
+*.swp  # Vim swap files
+*.lock
+*.cache
+*.ctags
+*.tags
+
