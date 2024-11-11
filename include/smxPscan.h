@@ -2,12 +2,13 @@
 #define SMX_PSCAN_H
 
 #include <TTree.h>
+#include <TObject.h> // Include TObject for ROOT I/O compatibility
 #include <fstream>
 #include <string>
 #include <vector>
 #include <ctime>  // For std::time_t and std::tm
 
-class smxPscan {
+class smxPscan : public TObject {
 private:
     TTree* pscanTree;                   // Internal field to store the TTree
     std::string asciiFileName;          // Field to store the ASCII file name

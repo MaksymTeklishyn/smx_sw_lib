@@ -5,6 +5,8 @@
 #include <regex>
 #include <filesystem> // For handling file paths
 
+// ROOT macro for class implementation
+
 // Constructor to initialize the TTree
 smxPscan::smxPscan() {
     pscanTree = new TTree("pscanTree", "Tree for pulse scan data");
