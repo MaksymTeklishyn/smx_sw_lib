@@ -35,6 +35,7 @@
 *.smod
 
 # Doxygen generated documentation
+/docs/
 /html/
 /latex/
 /man/
