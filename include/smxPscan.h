@@ -2,6 +2,7 @@
 #define SMX_PSCAN_H
 
 #include <TTree.h>
+#include <TString.h>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -21,7 +22,7 @@ private:
 
     // Parsed data fields
     std::time_t readTime;               ///< Parsed read time as a numeric value (epoch time).
-    std::string asicId;                 ///< Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02").
+    TString asicId;                     ///< Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02").
     int nPulses;                        ///< Parsed number of pulses (e.g., 100).
 
     /**
@@ -99,7 +100,7 @@ public:
      * @brief Getter for the parsed ASIC ID.
      * @return The ASIC ID as a string.
      */
-    std::string getAsicId() const;
+    TString getAsicId() const;
 
     /**
      * @brief Getter for the parsed number of pulses.

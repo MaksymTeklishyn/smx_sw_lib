@@ -94,7 +94,7 @@ std::time_t smxPscan::getReadTime() const {
 }
 
 // Other getters
-std::string smxPscan::getAsicId() const {
+TString smxPscan::getAsicId() const {
     return asicId;
 }
 
@@ -212,8 +212,7 @@ void smxPscan::writeRootFile(const std::string& outputFileName) {
         pscanTree->Write();
 
         // Convert asicId to TString and write it to the ROOT file
-        TString asicIdStr(asicId.c_str());
-        file.WriteObject(&asicIdStr, "asicId");
+        file.WriteObject(&asicId, "asicId");
 
         file.Close();
     } else {
