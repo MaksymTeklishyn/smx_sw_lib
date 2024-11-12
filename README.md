@@ -8,10 +8,8 @@ This project provides a set of generic C++ libraries to handle SMX (STS-MUCH-XYT
 To download the project from a Git repository, use the following command in your terminal:
 
 ```bash
-git clone <repository_url>
+git clone https://github.com/MaksymTeklishyn/smx_sw_lib
 ```
-
-Replace `<repository_url>` with the actual URL of the Git repository.
 
 ## Generating Documentation with Doxygen
 

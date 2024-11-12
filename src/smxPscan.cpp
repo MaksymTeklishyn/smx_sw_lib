@@ -48,13 +48,24 @@ void smxPscan::parseHeaderLine(const std::string& line) {
 
 // Helper function to parse the asciiFileName
 void smxPscan::parseAsciiFileName() {
-    std::regex filename_regex(R"(pscan_(\d{6}_\d{4})_(XA-[\d\-]+)_.*_NP_(\d+)_.*\.txt)");
+    // Updated regex pattern to capture Vref_p, Vref_n, Vref_t, and Thr2_glb
+    std::regex filename_regex(R"(pscan_(\d{6}_\d{4})_(XA-[\d\-]+)_.*_SET_(\d+)_(\d+)_(\d+)_(\d+)_.*_NP_(\d+)_.*\.txt)");
     std::smatch match;
 
     if (std::regex_search(asciiFileName, match, filename_regex)) {
-        std::string readTimeStr = match[1]; // Extract read time as a string
-        asicId = match[2];                  // Extract ASIC ID
-        nPulses = std::stoi(match[3]);      // Extract number of pulses
+        std::string readTimeStr = match[1];     // Extract read time as a string
+        asicId = match[2];                      // Extract ASIC ID
+        int Vref_p = std::stoi(match[3]);       // Vref_p
+        int Vref_n = std::stoi(match[4]);       // Vref_n
+        int Vref_t = std::stoi(match[5]);       // Vref_t
+        int Thr2_glb = std::stoi(match[6]);     // Thr2_glb
+        nPulses = std::stoi(match[7]);          // Extract number of pulses
+
+        // Update smxAsicSettings with extracted values
+        asicSettings.setVref_p(Vref_p);
+        asicSettings.setVref_n(Vref_n);
+        asicSettings.setVref_t(Vref_t);
+        asicSettings.setThr2_glb(Thr2_glb);
 
         // Parse the readTime string into a std::tm struct
         std::tm timeStruct = {};
@@ -76,6 +87,8 @@ void smxPscan::parseAsciiFileName() {
     std::cout << "readTime: " << readTime << " (" << formatReadTime() << ")" << std::endl;
     std::cout << "asicId: " << asicId << std::endl;
     std::cout << "nPulses: " << nPulses << std::endl;
+    std::cout << "Vref_p: " << asicSettings.getVref_p() << ", Vref_n: " << asicSettings.getVref_n()
+              << ", Vref_t: " << asicSettings.getVref_t() << ", Thr2_glb: " << asicSettings.getThr2_glb() << std::endl;
 }
 
 // Helper function to convert readTime to a human-readable string
