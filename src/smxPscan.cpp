@@ -13,9 +13,6 @@ smxPscan::smxPscan() : pscanTree(new TTree("pscanTree", "Tree for pulse scan dat
 // Destructor to manage memory and close the file if necessary
 smxPscan::~smxPscan() {
     delete pscanTree;
-    if (asciiFile.is_open()) {
-        asciiFile.close();
-    }
 }
 
 void smxPscan::parseHeaderLine(const std::string& line) {
@@ -124,6 +121,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     parseAsciiFileName();
 
     // Open the text file
+    std::ifstream asciiFile;
     asciiFile.open(filename);
     if (!asciiFile.is_open()) {
         logError("Opening file: " + filename);

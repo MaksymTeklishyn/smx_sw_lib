@@ -20,7 +20,6 @@ private:
     TTree* pscanTree;                   ///< Internal field to store the TTree.
     std::string asciiFileName;          ///< Field to store the ASCII file name.
     std::string asciiFileAddress;       ///< Field to store the ASCII file address.
-    std::ifstream asciiFile;            ///< Field for the input file stream.
     TArrayI readDiscList;               ///< Field to store DISC_LIST positions.
 
     // Parsed data fields
