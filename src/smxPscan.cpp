@@ -124,13 +124,13 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
 
     // Variables for TTree branches
     int pulse, channel;
-    int adc[31] = {0};  // Array of fixed size 31, initialized to 0
+    int adc[smxNAdc] = {0};  // Array of fixed size smxNAdc, initialized to 0
     int tcomp;          // Timing comparator
 
     // Set branch addresses
     pscanTree->Branch("pulse", &pulse, "pulse/I");
     pscanTree->Branch("channel", &channel, "channel/I");
-    pscanTree->Branch("ADC", adc, "ADC[31]/I");
+    pscanTree->Branch("ADC", adc, Form("ADC[%d]/I", smxNAdc));
     pscanTree->Branch("tcomp", &tcomp, "tcomp/I");
 
     // Regex pattern to parse each data line
@@ -155,7 +155,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
 
             // Read ADC values up to the second-to-last value for adc, and assign the last to tcomp
             while (iss >> value) {
-                if (index < readDiscList.GetSize() - 1 && readDiscList[index] < 31) {
+                if (index < readDiscList.GetSize() - 1 && readDiscList[index] < smxNAdc) {
                     adc[readDiscList[index]] = value;
                 } else {
                     tcomp = value;  // Last value as timing comparator

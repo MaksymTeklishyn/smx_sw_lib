@@ -1,6 +1,7 @@
 #ifndef SMX_PSCAN_H
 #define SMX_PSCAN_H
 
+#include "smxConstants.h"
 #include <TTree.h>
 #include <TString.h>
 #include <TArrayI.h> 
