@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <ctime>  // For std::time_t and std::tm
+#include "smxAsicSettings.h"  // Include smxAsicSettings header
 
 /**
  * @class smxPscan
@@ -26,6 +27,8 @@ private:
     std::time_t readTime;               ///< Parsed read time as a numeric value (epoch time).
     TString asicId;                     ///< Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02").
     int nPulses = 100;                  ///< Parsed number of pulses (e.g., 100).
+
+    smxAsicSettings asicSettings;       ///< ASIC settings for the pulse scan.
 
     /**
      * @brief Helper function to parse the first line of the ASCII file and populate readDiscList.
@@ -121,6 +124,19 @@ public:
      * @return The number of pulses.
      */
     int getNPulses() const;
+
+    /**
+     * @brief Getter for the ASIC settings.
+     * @return A reference to the smxAsicSettings object.
+     */
+    smxAsicSettings& getAsicSettings();
+
+    /**
+     * @brief Setter for the ASIC settings.
+     * @param settings The smxAsicSettings object to set.
+     */
+    void setAsicSettings(const smxAsicSettings& settings);
+
 };
 
 #endif // SMX_PSCAN_H

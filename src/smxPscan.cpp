@@ -218,3 +218,12 @@ const TArrayI& smxPscan::getReadDiscList() const {
     return readDiscList;
 }
 
+// Setter for the ASIC settings
+void smxPscan::setAsicSettings(const smxAsicSettings& settings) {
+    asicSettings = settings;
+}
+
+// Getter for the ASIC settings
+smxAsicSettings& smxPscan::getAsicSettings() {
+    return asicSettings;
+}
