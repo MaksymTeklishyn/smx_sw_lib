@@ -25,7 +25,7 @@ public:
      * @brief Adds a pscan to the ASIC. Checks that asicId is compatible.
      * @param pscan The smxPscan object to add.
      */
-    void addPscan(const smxPscan& pscan);
+    void addPscan(smxPscan* pscan);
 
     /**
      * @brief Sets the ASIC ID.

@@ -4,19 +4,20 @@
 smxAsic::smxAsic(const TString& id, const smxAsicSettings& settings)
     : asicId(id), asicSettings(settings) {}
 
-void smxAsic::addPscan(const smxPscan& pscan) {
-    // Check if current asicId is null, empty, or the default placeholder
-    if (asicId.IsNull() || asicId == "" || asicId == "XA-000-00-000-000-000-000-00") {
-        asicId = pscan.getAsicId();  // Set asicId from pscan
-        pscanData.push_back(pscan);
-    } else if (asicId == pscan.getAsicId()) {
-        // IDs match, add the pscan
-        pscanData.push_back(pscan);
-    } else {
-        // IDs do not match, log error and do not add
-        std::cerr << "Error: Attempt to add pscan with different ASIC ID ("
-                  << pscan.getAsicId() << ") to ASIC with ID " << asicId << "." << std::endl;
+void smxAsic::addPscan(smxPscan* pscan) {
+    if (!pscan) {
+        std::cerr << "Error: nullptr passed to addPscan." << std::endl;
+        return;
     }
+
+    if (asicId.IsNull() || asicId == "XA-000-00-000-000-000-000-00") {
+        asicId = pscan->getAsicId();
+    } else if (asicId != pscan->getAsicId()) {
+        std::cerr << "Error: Mismatched ASIC IDs. Cannot add pscan." << std::endl;
+        return;
+    }
+
+    pscanData.push_back(*pscan);  // Store the pointer in the collection
 }
 
 void smxAsic::setAsicId(const TString& id) {
