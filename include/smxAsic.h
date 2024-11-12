@@ -22,10 +22,16 @@ public:
     smxAsic(const TString& id, const smxAsicSettings& settings);
 
     /**
-     * @brief Adds a pscan to the ASIC.
+     * @brief Adds a pscan to the ASIC. Checks that asicId is compatible.
      * @param pscan The smxPscan object to add.
      */
     void addPscan(const smxPscan& pscan);
+
+    /**
+     * @brief Sets the ASIC ID.
+     * @param id The new ASIC ID as a TString.
+     */
+    void setAsicId(const TString& id);
 
     /**
      * @brief Retrieves the ASIC ID.

@@ -238,3 +238,7 @@ void smxPscan::setAsicSettings(const smxAsicSettings& settings) {
 smxAsicSettings& smxPscan::getAsicSettings() {
     return asicSettings;
 }
+
+TString smxPscan::getAsicId() const {
+    return asicId;
+}
