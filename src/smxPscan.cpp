@@ -196,6 +196,7 @@ void smxPscan::writeRootFile(const std::string& outputFileName) {
     if (file.IsOpen()) {
         pscanTree->Write();
 	// Write metadata:
+	asicSettings.toTree()->Write();
         file.WriteObject(&asicId, "asicId");
         file.WriteObject(&readDiscList, "readDiscList");
         TParameter<int> nPulsesParam("nPulses", nPulses);

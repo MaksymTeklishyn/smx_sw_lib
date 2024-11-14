@@ -43,7 +43,7 @@ public:
      * @param treeName The name of the TTree.
      * @return Pointer to the single-entry TTree containing all settings.
      */
-    TTree* toTree(const char* treeName = "AsicSettingsTree") const;
+    TTree* toTree(const char* treeName = "asicSettingsTree") const;
 };
 
 #endif // SMX_ASIC_SETTINGS_H
