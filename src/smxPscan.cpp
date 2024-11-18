@@ -2,6 +2,9 @@
 #include <TFile.h>
 #include <TNamed.h>
 #include <TParameter.h>
+#include <RooRealVar.h>
+#include <RooDataSet.h>
+#include <RooArgSet.h>
 #include <iostream>
 #include <sstream>
 #include <regex>
@@ -162,7 +165,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
             std::string adc_values_str = data_match[3];
             std::istringstream iss(adc_values_str);
             int value;
-            size_t index = 0;
+            int index = 0;
 
             // Read ADC values up to the second-to-last value for adc, and assign the last to tcomp
             while (iss >> value) {
@@ -243,3 +246,49 @@ smxAsicSettings& smxPscan::getAsicSettings() {
 TString smxPscan::getAsicId() const {
     return asicId;
 }
+
+RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
+    // Step 1: Define RooRealVars for pulse amplitude (x-axis) and count number (y-axis)
+    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", 0, 256); // Range of pulse amplitudes
+    RooRealVar countN("countN", "Count (Timing Comparator)", 0, 3 * nPulses); // Range of tcomp or count
+    RooArgSet variables(pulseAmp, countN); // Group the variables into an ArgSet
+
+    // Step 2: Create a new RooDataSet
+    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data", variables);
+
+    // Step 3: Check for required branches
+    if (!pscanTree->GetBranch("pulse") || !pscanTree->GetBranch("channel") ||
+        !pscanTree->GetBranch("ADC") || !pscanTree->GetBranch("tcomp")) {
+        std::cerr << "Error: Required branches are missing from pscanTree." << std::endl;
+        return nullptr;
+    }
+
+    // Step 4: Set up branches for reading TTree data
+    int pulse, channel, tcomp;
+    int adc[smxNAdc]; // Array for ADC comparators
+    pscanTree->SetBranchAddress("pulse", &pulse);
+    pscanTree->SetBranchAddress("channel", &channel);
+    pscanTree->SetBranchAddress("ADC", adc);
+    pscanTree->SetBranchAddress("tcomp", &tcomp);
+
+    // Step 5: Loop over TTree entries and filter for the specified channel and comparator
+    for (Long64_t i = 0; i < pscanTree->GetEntries(); ++i) {
+        pscanTree->GetEntry(i);
+
+        // Check if the comparator index is valid
+        if (comparator < 0 || comparator >= smxNAdc) {
+            std::cerr << "Error: Comparator index out of range: " << comparator << std::endl;
+            continue;
+        }
+
+        // Filter for the specified channel
+        if (channel == channelN) {
+            pulseAmp.setVal(pulse);           // Set x-axis variable
+            countN.setVal(adc[comparator]);  // Set y-axis variable from the comparator
+            dataset->add(variables);         // Add the entry to the dataset
+        }
+    }
+
+    return dataset;
+}
+

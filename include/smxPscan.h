@@ -5,6 +5,7 @@
 #include <TTree.h>
 #include <TString.h>
 #include <TArrayI.h> 
+#include <RooDataSet.h>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -58,7 +59,16 @@ private:
      */
     std::string generateDefaultOutputFileName() const;
 
+    /**
+     * @brief Converts pscan data into a RooDataSet for specific channels and comparator.
+     * @param channels A vector of channel numbers to include in the dataset.
+     * @param comparator The index of the comparator to include.
+     * @return A RooDataSet with x-axis: pulse, y-axis: tcomp for the specified channels and comparator.
+     */
+
 public:
+
+    RooDataSet* toRooDataSet(int channelN, int comparator) const;
     /**
      * @brief Constructor to initialize the TTree.
      */
