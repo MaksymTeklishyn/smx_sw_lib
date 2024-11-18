@@ -67,8 +67,6 @@ private:
      */
 
 public:
-
-    RooDataSet* toRooDataSet(int channelN, int comparator) const;
     /**
      * @brief Constructor to initialize the TTree.
      */
@@ -78,6 +76,10 @@ public:
      * @brief Destructor to manage memory and close the file if necessary.
      */
     ~smxPscan();
+
+    RooDataSet* toRooDataSet(int channelN, int comparator) const;
+
+    void plotRooDataSet(int channel=30, int comparator=30, const std::string& outputFilename = "testDataSet.pdf");
 
     /**
      * @brief Reads an ASCII file, extracts data, and fills the TTree.

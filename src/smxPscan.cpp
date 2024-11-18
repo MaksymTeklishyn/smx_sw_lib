@@ -1,10 +1,13 @@
 #include "smxPscan.h"
 #include <TFile.h>
+#include <TCanvas.h>
+#include <TAxis.h>
 #include <TNamed.h>
 #include <TParameter.h>
 #include <RooRealVar.h>
 #include <RooDataSet.h>
 #include <RooArgSet.h>
+#include <RooPlot.h>
 #include <iostream>
 #include <sstream>
 #include <regex>
@@ -197,14 +200,26 @@ void smxPscan::writeRootFile(const std::string& outputFileName) {
     TFile file(outputFile.c_str(), "RECREATE");
 
     if (file.IsOpen()) {
+        // Step 1: Write the main data tree
         pscanTree->Write();
-	// Write metadata:
-	asicSettings.toTree()->Write();
+
+        // Step 2: Generate and write RooDataSet for specific channel and comparator
+        int channel = 30;   // Example channel
+        int comparator = 30; // Example comparator
+        RooDataSet* dataset = toRooDataSet(channel, comparator);
+        if (dataset) {
+            dataset->Write("pscanData");
+            delete dataset; // Avoid memory leak
+        }
+
+        // Step 3: Write metadata
+        asicSettings.toTree()->Write("asicSettingsTree");
         file.WriteObject(&asicId, "asicId");
         file.WriteObject(&readDiscList, "readDiscList");
         TParameter<int> nPulsesParam("nPulses", nPulses);
         nPulsesParam.Write();
 
+        // Step 4: Close the file
         file.Close();
         std::cout << "File written successfully to: " << outputFile << std::endl;
     } else {
@@ -290,5 +305,44 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     }
 
     return dataset;
+}
+
+void smxPscan::plotRooDataSet(int channel, int comparator, const std::string& outputFilename) {
+    // Generate the RooDataSet for the specified channel and comparator
+    RooDataSet* dataset = toRooDataSet(channel, comparator);
+    if (!dataset) {
+        std::cerr << "Error: Failed to create RooDataSet." << std::endl;
+        return;
+    }
+
+    // Step 1: Get the RooRealVars from the dataset
+    RooRealVar* pulseAmp = (RooRealVar*)dataset->get()->find("pulseAmp");
+    RooRealVar* countN = (RooRealVar*)dataset->get()->find("countN");
+
+    if (!pulseAmp || !countN) {
+        std::cerr << "Error: Variables 'pulseAmp' or 'countN' not found in the dataset." << std::endl;
+        delete dataset; // Clean up
+        return;
+    }
+
+    // Step 2: Create a frame for the x-axis variable (pulseAmp)
+    RooPlot* frame = pulseAmp->frame(RooFit::Title("Pulse Amplitude vs Count"));
+
+    // Step 3: Plot the dataset on the frame
+    dataset->plotOn(frame, RooFit::MarkerStyle(kFullCircle), RooFit::MarkerSize(0.8));
+
+    // Step 4: Create a TCanvas and draw the frame
+    TCanvas canvas("canvas", "Pulse Amplitude vs Count", 800, 600);
+    frame->GetXaxis()->SetTitle("Pulse Amplitude");
+    frame->GetYaxis()->SetTitle("Count (Timing Comparator)");
+    frame->Draw();
+
+    // Step 5: Save the plot as a PDF file
+    canvas.SaveAs(outputFilename.c_str());
+
+    std::cout << "Plot saved as: " << outputFilename << std::endl;
+
+    // Clean up
+    delete dataset;
 }
 
