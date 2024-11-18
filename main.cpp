@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
 
     pscan->readAsciiFile(filename)->Print();
     pscan->writeRootFile();
-    pscan->plotRooDataSet(100, 24);
+    pscan->showTreeEntries(); 
     smxAsic asic;       
     asic.addPscan(pscan);
                         

@@ -124,27 +124,32 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     std::filesystem::path filePath(filename);
     asciiFileName = filePath.filename().string();
     asciiFileAddress = filePath.parent_path().string();
+    std::cout << "Processing file: " << asciiFileName << " at path: " << asciiFileAddress << std::endl;
+
     parseAsciiFileName();
 
     // Open the text file
     std::ifstream asciiFile;
     asciiFile.open(filename);
     if (!asciiFile.is_open()) {
-        logError("Opening file: " + filename);
+        logError("Failed to open file: " + filename);
         return nullptr;
     }
+    std::cout << "File opened successfully: " << filename << std::endl;
 
     // Parse header line to extract DISC_LIST positions
     std::string line;
     std::getline(asciiFile, line);
+    std::cout << "Header line: " << line << std::endl;
     parseHeaderLine(line);
 
     // Variables for TTree branches
     int pulse, channel;
     int adc[smxNAdc] = {0};  // Array of fixed size smxNAdc, initialized to 0
-    int tcomp;          // Timing comparator
+    int tcomp;               // Timing comparator
 
     // Set branch addresses
+    std::cout << "Setting up TTree branches..." << std::endl;
     pscanTree->Branch("pulse", &pulse, "pulse/I");
     pscanTree->Branch("channel", &channel, "channel/I");
     pscanTree->Branch("ADC", adc, Form("ADC[%d]/I", smxNAdc));
@@ -154,12 +159,16 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     std::regex data_pattern(R"(vp\s+(\d+)\s+ch\s+(\d+):\s+((\d+\s*)+))");
 
     // Read and parse each line of data
+    Long64_t lineCount = 0;
     while (std::getline(asciiFile, line)) {
+        lineCount++;
         std::smatch data_match;
         if (std::regex_match(line, data_match, data_pattern)) {
             // Extract pulse and channel
             pulse = std::stoi(data_match[1]);
             channel = std::stoi(data_match[2]);
+
+            std::cout << "Line " << lineCount << ": Pulse: " << pulse << ", Channel: " << channel << std::endl;
 
             // Reset adc array to zero for each entry
             std::fill(std::begin(adc), std::end(adc), 0);
@@ -167,21 +176,24 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
             // Extract ADC values into a string and parse them into the array
             std::string adc_values_str = data_match[3];
             std::istringstream iss(adc_values_str);
+            std::fill(std::begin(adc), std::end(adc), 0);
             int value;
             int index = 0;
-
             // Read ADC values up to the second-to-last value for adc, and assign the last to tcomp
             while (iss >> value) {
                 if (index < readDiscList.GetSize() - 1 && readDiscList[index] < smxNAdc) {
                     adc[readDiscList[index]] = value;
+                    std::cout << "ADC[" << readDiscList[index] << "] = " << adc[readDiscList[index]] << std::endl;
                 } else {
                     tcomp = value;  // Last value as timing comparator
+                    std::cout << "TComp = " << tcomp << std::endl;
                 }
                 ++index;
             }
 
             // Fill the TTree
             pscanTree->Fill();
+            std::cout << "Filled TTree for line " << lineCount << std::endl;
         } else {
             logError("Failed to match the line: " + line);
         }
@@ -189,6 +201,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
 
     // Close the file
     asciiFile.close();
+    std::cout << "File processing completed. Total lines: " << lineCount << std::endl;
 
     // Return the filled TTree
     return pscanTree;
@@ -200,19 +213,8 @@ void smxPscan::writeRootFile(const std::string& outputFileName) {
     TFile file(outputFile.c_str(), "RECREATE");
 
     if (file.IsOpen()) {
-        // Step 1: Write the main data tree
-        pscanTree->Write();
+        pscanTree->Clone()->Write();
 
-        // Step 2: Generate and write RooDataSet for specific channel and comparator
-        int channel = 30;   // Example channel
-        int comparator = 30; // Example comparator
-        RooDataSet* dataset = toRooDataSet(channel, comparator);
-        if (dataset) {
-            dataset->Write("pscanData");
-            delete dataset; // Avoid memory leak
-        }
-
-        // Step 3: Write metadata
         asicSettings.toTree()->Write("asicSettingsTree");
         file.WriteObject(&asicId, "asicId");
         file.WriteObject(&readDiscList, "readDiscList");
@@ -263,12 +265,19 @@ TString smxPscan::getAsicId() const {
 }
 
 RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
+    // Check if the comparator index is valid
+    if (comparator < 0 || comparator >= smxNAdc) {
+        std::cerr << "Error: Comparator index out of range: " << comparator << std::endl;
+        return nullptr;
+    }
+
     // Step 1: Define RooRealVars for pulse amplitude (x-axis) and count number (y-axis)
     RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", 0, 256); // Range of pulse amplitudes
     RooRealVar countN("countN", "Count (Timing Comparator)", 0, 3 * nPulses); // Range of tcomp or count
     RooArgSet variables(pulseAmp, countN); // Group the variables into an ArgSet
 
     // Step 2: Create a new RooDataSet
+    std::cout << "Creating RooDataSet for channel: " << channelN << " and comparator: " << comparator << std::endl;
     RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data", variables);
 
     // Step 3: Check for required branches
@@ -278,31 +287,40 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
         return nullptr;
     }
 
+    std::cout << "Branches found: pulse, channel, ADC, tcomp." << std::endl;
+
     // Step 4: Set up branches for reading TTree data
+
     int pulse, channel, tcomp;
-    int adc[smxNAdc]; // Array for ADC comparators
+    int adc[smxNAdc] = {0}; // Ensures no garbage values
     pscanTree->SetBranchAddress("pulse", &pulse);
     pscanTree->SetBranchAddress("channel", &channel);
     pscanTree->SetBranchAddress("ADC", adc);
     pscanTree->SetBranchAddress("tcomp", &tcomp);
 
+    std::cout << "Branch addresses set. Looping through TTree entries..." << std::endl;
+
     // Step 5: Loop over TTree entries and filter for the specified channel and comparator
     for (Long64_t i = 0; i < pscanTree->GetEntries(); ++i) {
         pscanTree->GetEntry(i);
 
-        // Check if the comparator index is valid
-        if (comparator < 0 || comparator >= smxNAdc) {
-            std::cerr << "Error: Comparator index out of range: " << comparator << std::endl;
-            continue;
-        }
+        // Debug: Print entry index
+        std::cout << "Entry: " << i << " Channel: " << channel << " Pulse: " << pulse << " Comparator ADC: " << adc[comparator] << std::endl;
 
         // Filter for the specified channel
         if (channel == channelN) {
             pulseAmp.setVal(pulse);           // Set x-axis variable
             countN.setVal(adc[comparator]);  // Set y-axis variable from the comparator
+
+            // Debug: Show values being added to the dataset
+            std::cout << "Adding to dataset - PulseAmp: " << pulseAmp.getVal()
+                      << ", CountN: " << countN.getVal() << std::endl;
+
             dataset->add(variables);         // Add the entry to the dataset
         }
     }
+
+    std::cout << "Finished creating RooDataSet. Total entries: " << dataset->numEntries() << std::endl;
 
     return dataset;
 }
@@ -344,5 +362,45 @@ void smxPscan::plotRooDataSet(int channel, int comparator, const std::string& ou
 
     // Clean up
     delete dataset;
+}
+
+
+void smxPscan::showTreeEntries() const {
+    // Step 1: Check if required branches exist
+    if (!pscanTree->GetBranch("pulse") || !pscanTree->GetBranch("channel") ||
+        !pscanTree->GetBranch("ADC") || !pscanTree->GetBranch("tcomp")) {
+        std::cerr << "Error: Required branches are missing from pscanTree." << std::endl;
+        return;
+    }
+
+    std::cout << "Branches found: pulse, channel, ADC, tcomp." << std::endl;
+
+    // Step 2: Set up branches for reading TTree data
+    int pulse, channel, tcomp;
+    int adc[smxNAdc] = {0}; // Array for ADC comparators
+    pscanTree->SetBranchAddress("pulse", &pulse);
+    pscanTree->SetBranchAddress("channel", &channel);
+    pscanTree->SetBranchAddress("ADC", adc);
+    pscanTree->SetBranchAddress("tcomp", &tcomp);
+
+    std::cout << "Branch addresses set. Looping through TTree entries..." << std::endl;
+
+    // Step 3: Loop over all TTree entries and print their contents
+    for (Long64_t i = 0; i < pscanTree->GetEntries(); ++i) {
+        pscanTree->GetEntry(i);
+
+        // Print all variables for the current entry
+        std::cout << "Entry: " << i
+                  << " Channel: " << channel
+                  << " Pulse: " << pulse
+                  << " TComp: " << tcomp
+                  << " ADC: ";
+        for (int j = 0; j < smxNAdc; ++j) {
+            std::cout << adc[j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "Finished dumping all TTree entries." << std::endl;
 }
 

@@ -148,6 +148,10 @@ public:
      */
     void setAsicSettings(const smxAsicSettings& settings);
 
+    /**
+     * @brief Debugging function showing pscasnTree in terminal.
+     */
+    void showTreeEntries() const; 
 };
 
 #endif // SMX_PSCAN_H
