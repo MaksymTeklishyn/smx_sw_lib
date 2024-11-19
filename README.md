@@ -40,7 +40,7 @@ The example program `read_pscan` demonstrates reading a p-scan `.txt` file, pars
 2. Run `read_pscan` with a specified p-scan `.txt` file as follows:
 
    ```bash
-   ./read_pscan path/to/your/pscan_file.txt
+   ./read_pscan data/*.txt
    ```
 
    This command reads the `.txt` file, parses its contents, and outputs the processed data to a ROOT file in the specified output location.
