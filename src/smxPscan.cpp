@@ -183,7 +183,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
             while (iss >> value) {
                 if (index < readDiscList.GetSize() - 1 && readDiscList[index] < smxNAdc) {
                     adc[readDiscList[index]] = value;
-                    std::cout << "ADC[" << readDiscList[index] << "] = " << adc[readDiscList[index]] << std::endl;
+                    std::cout << "ADC[" << readDiscList[index] << "] = " << adc[readDiscList[index]] << "\t";
                 } else {
                     tcomp = value;  // Last value as timing comparator
                     std::cout << "TComp = " << tcomp << std::endl;
@@ -214,14 +214,15 @@ void smxPscan::writeRootFile(const std::string& outputFileName) {
 
     if (file.IsOpen()) {
         pscanTree->Clone()->Write();
-
+        settingsToTree()->Write();
         asicSettings.toTree()->Write("asicSettingsTree");
+
+/*
         file.WriteObject(&asicId, "asicId");
         file.WriteObject(&readDiscList, "readDiscList");
         TParameter<int> nPulsesParam("nPulses", nPulses);
         nPulsesParam.Write();
-
-        // Step 4: Close the file
+*/
         file.Close();
         std::cout << "File written successfully to: " << outputFile << std::endl;
     } else {
@@ -402,5 +403,32 @@ void smxPscan::showTreeEntries() const {
     }
 
     std::cout << "Finished dumping all TTree entries." << std::endl;
+}
+
+
+TTree* smxPscan::settingsToTree() const {
+    // Step 1: Create a new TTree instance
+    TTree* tree = new TTree("pscanSettingsTree", "Settings Tree for SMX Pscan");
+
+    // Persistent variables to ensure scope validity
+    Long64_t readTimeLong = static_cast<Long64_t>(readTime);
+    int nPulsesCopy = nPulses; // Copy to ensure persistence
+    TString asicIdCopy = asicId; // Copy to ensure persistence
+    std::vector<int> discListVec(readDiscList.GetSize());
+    for (int i = 0; i < readDiscList.GetSize(); ++i) {
+        discListVec[i] = readDiscList[i];
+    }
+
+    // Create branches with persistent variables
+    tree->Branch("readTime", &readTimeLong, "readTime/L"); // 64-bit integer
+    tree->Branch("nPulses", &nPulsesCopy, "nPulses/I");   // Integer
+    tree->Branch("asicId", &asicIdCopy);                 // TString
+    tree->Branch("readDiscList", &discListVec);          // Vector
+
+    // Step 3: Fill the tree with the current object data
+    tree->Fill();
+
+    // Step 4: Return the constructed TTree
+    return tree;
 }
 

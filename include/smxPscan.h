@@ -31,6 +31,21 @@ private:
     smxAsicSettings asicSettings;       ///< ASIC settings for the pulse scan.
 
     /**
+     * @brief Creates a ROOT TTree containing the settings of the SMX pulse scan.
+     *
+     * The TTree includes the following branches:
+     * - `readTime`: The timestamp of the scan (in seconds since epoch).
+     * - `nPulses`: The number of pulses used in the scan.
+     * - `readDiscList`: A list of discriminator positions.
+     * - `asicId`: The unique identifier of the ASIC.
+     *
+     * @return A pointer to the constructed TTree, populated with the current settings data.
+     *
+     * @note The caller is responsible for managing the memory of the returned TTree.
+     */
+    TTree* settingsToTree() const;
+
+    /**
      * @brief Helper function to parse the first line of the ASCII file and populate readDiscList.
      * @param line The header line to be parsed.
      */
