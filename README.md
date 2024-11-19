@@ -25,6 +25,14 @@ To generate the documentation on your PC using Doxygen, follow these steps:
 
    This will generate HTML and LaTeX documentation (if configured in the `Doxyfile`), which you can view locally in the `html` directory within the output path specified in `Doxyfile`.
 
+3. Open the Doxygen documentation:
+
+   ```bash
+   firefox docs/html/index.html
+   ```
+
+This will generate HTML and LaTeX documentation (if configured in the `Doxyfile`), which you can view locally in the `html` directory within the output path specified in `Doxyfile`.
+
 ## Running the Example: `read_pscan`
 
 The example program `read_pscan` demonstrates reading a p-scan `.txt` file, parsing its data, and writing the results to a ROOT file.
@@ -45,3 +53,36 @@ The example program `read_pscan` demonstrates reading a p-scan `.txt` file, pars
 
    This command reads the `.txt` file, parses its contents, and outputs the processed data to a ROOT file in the specified output location.
 
+To access the `pscanTree` in your `.root` files from the command line or within a ROOT session, you can follow these steps:
+
+To access the `pscanTree` using the new `TBrowser` in ROOT, follow these steps:
+
+## Using `TBrowser` to Explore `pscanTree`
+
+1. **Start ROOT:**
+   Open a terminal and start a ROOT session with your `.root` files:
+
+   ```bash
+   root data/*.root
+   ```
+
+   This command will open ROOT and load the first matching `.root` file in the `data` directory.
+
+2. **Open `TBrowser`:**
+   Launch the interactive `TBrowser` GUI by typing:
+
+   ```cpp
+   new TBrowser();
+   ```
+
+## Alternative Scripting in the Same Session
+
+If you are already in a ROOT session and want to work interactively after exploring the file in `TBrowser`, you can still retrieve and manipulate the `pscanTree` using:
+
+```cpp
+TTree* tree = (TTree*)gDirectory->Get("pscanTree");
+tree->Print(); // View the structure of the tree
+tree->Scan();  // Print its data
+```
+
+This workflow combines the graphical capabilities of `TBrowser` with the power of scripting, enabling you to explore, visualize, and process your data seamlessly.

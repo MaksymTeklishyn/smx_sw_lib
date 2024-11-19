@@ -102,4 +102,5 @@ Desktop.ini
 *.ctags
 *.tags
 *.root
-
+*.pdf
+*.png
