@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
     pscan->readAsciiFile(filename)->Print();
     pscan->writeRootFile();
 //  pscan->showTreeEntries(); 
+    pscan->plotRooDataSet(5);
     smxAsic asic;       
     asic.addPscan(pscan);
                         

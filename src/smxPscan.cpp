@@ -273,8 +273,8 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     }
 
     // Step 1: Define RooRealVars for pulse amplitude (x-axis) and count number (y-axis)
-    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", 0, 256); // Range of pulse amplitudes
-    RooRealVar countN("countN", "Count (Timing Comparator)", 0, 3 * nPulses); // Range of tcomp or count
+    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", -10, 300); // Range of pulse amplitudes
+    RooRealVar countN("countN", "Count (Timing Comparator)", 0, 300); // Range of tcomp or count
     RooArgSet variables(pulseAmp, countN); // Group the variables into an ArgSet
 
     // Step 2: Create a new RooDataSet
@@ -305,9 +305,6 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     for (Long64_t i = 0; i < pscanTree->GetEntries(); ++i) {
         pscanTree->GetEntry(i);
 
-        // Debug: Print entry index
-        std::cout << "Entry: " << i << " Channel: " << channel << " Pulse: " << pulse << " Comparator ADC: " << adc[comparator] << std::endl;
-
         // Filter for the specified channel
         if (channel == channelN) {
             pulseAmp.setVal(pulse);           // Set x-axis variable
@@ -334,7 +331,7 @@ void smxPscan::plotRooDataSet(int channel, int comparator, const std::string& ou
         return;
     }
 
-    // Step 1: Get the RooRealVars from the dataset
+    // Retrieve the RooRealVars for pulse amplitude and count
     RooRealVar* pulseAmp = (RooRealVar*)dataset->get()->find("pulseAmp");
     RooRealVar* countN = (RooRealVar*)dataset->get()->find("countN");
 
@@ -344,19 +341,21 @@ void smxPscan::plotRooDataSet(int channel, int comparator, const std::string& ou
         return;
     }
 
-    // Step 2: Create a frame for the x-axis variable (pulseAmp)
+    // Create a frame for the x-axis variable (pulseAmp)
     RooPlot* frame = pulseAmp->frame(RooFit::Title("Pulse Amplitude vs Count"));
 
-    // Step 3: Plot the dataset on the frame
-    dataset->plotOn(frame, RooFit::MarkerStyle(kFullCircle), RooFit::MarkerSize(0.8));
+    // Plot the dataset on the frame with small dots and line connection
+    dataset->plotOnXY(frame, RooFit::YVar(*countN), RooFit::MarkerStyle(kFullDotSmall), RooFit::LineStyle(kSolid));
 
-    // Step 4: Create a TCanvas and draw the frame
-    TCanvas canvas("canvas", "Pulse Amplitude vs Count", 800, 600);
+    // Label the axes
     frame->GetXaxis()->SetTitle("Pulse Amplitude");
-    frame->GetYaxis()->SetTitle("Count (Timing Comparator)");
+    frame->GetYaxis()->SetTitle("Count (Comparator)");
+
+    // Create a TCanvas and draw the frame
+    TCanvas canvas("canvas", "Pulse Amplitude vs Count", 1000, 500);
     frame->Draw();
 
-    // Step 5: Save the plot as a PDF file
+    // Save the plot to the specified file
     canvas.SaveAs(outputFilename.c_str());
 
     std::cout << "Plot saved as: " << outputFilename << std::endl;
