@@ -6,6 +6,7 @@
 #include <RooGenericPdf.h>
 #include <RooFitResult.h>
 #include <TString.h>
+#include <TCanvas.h>
 #include <iostream>
 
 /**
@@ -42,6 +43,14 @@ public:
      * @brief Destructor to clean up dynamically allocated memory.
      */
     ~smxScurveFit();
+
+    /**
+     * @brief Generates and returns a TCanvas with the S-curve fit plot.
+     * Also saves the plot to a PDF for debugging purposes.
+     * @param outputFilename Name of the output PDF file for the plot.
+     * @return Pointer to the TCanvas object containing the plot.
+     */
+    TCanvas* drawPlot(const TString& outputFilename = "testDataSet.pdf") const;
 
     /**
      * @brief Performs the fitting procedure.

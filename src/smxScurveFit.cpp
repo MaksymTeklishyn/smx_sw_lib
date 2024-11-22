@@ -3,6 +3,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TString.h>
+#include <TAxis.h>
 
 smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
     : data(dataset), channel(ch), comparator(comp), fitResult(nullptr),
@@ -22,6 +23,51 @@ smxScurveFit::~smxScurveFit() {
     delete scurvePdf;
     delete fitResult;
 }
+
+TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
+    if (!data) {
+        std::cerr << "Error: No RooDataSet available for plotting." << std::endl;
+        return nullptr;
+    }
+
+    // Retrieve the RooRealVars for pulse amplitude and countN
+    RooRealVar* pulseAmp = (RooRealVar*)data->get()->find("pulseAmp");
+    RooRealVar* countN = (RooRealVar*)data->get()->find("countN");
+
+    if (!pulseAmp || !countN) {
+        std::cerr << "Error: Variables 'pulseAmp' or 'countN' not found in the dataset." << std::endl;
+        return nullptr;
+    }
+
+    // Create a frame for the x-axis variable (pulseAmp)
+    RooPlot* frame = pulseAmp->frame(RooFit::Title("S-Curve Fit"));
+
+    // Plot the dataset on the frame
+    data->plotOnXY(frame, RooFit::YVar(*countN), RooFit::MarkerStyle(kFullDotSmall), RooFit::LineStyle(kSolid));
+
+    // If a fit was performed, overlay the S-curve fit
+    if (fitResult) {
+        scurvePdf->plotOn(frame);
+    } else {
+        std::cerr << "Warning: No fit has been performed. Plotting only data points." << std::endl;
+    }
+
+    // Label the axes
+    frame->GetXaxis()->SetTitle("Pulse Amplitude");
+    frame->GetYaxis()->SetTitle("Count");
+
+    // Create a TCanvas and draw the frame
+    TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 500);
+    frame->Draw();
+
+    // Save the plot to the specified file
+    canvas->SaveAs(outputFilename);
+
+    std::cout << "Plot saved as: " << outputFilename << std::endl;
+
+    return canvas; // Return the TCanvas for further use
+}
+
 
 void smxScurveFit::setupModel() {
     // Define variables

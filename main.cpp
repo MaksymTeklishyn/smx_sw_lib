@@ -1,4 +1,5 @@
 #include "smxPscan.h"
+#include "smxScurveFit.h"
 #include "smxAsic.h"
 #include <iostream>
 
@@ -13,8 +14,8 @@ int main(int argc, char* argv[]) {
 
     pscan->readAsciiFile(filename)->Print();
     pscan->writeRootFile();
-//  pscan->showTreeEntries(); 
-    pscan->plotRooDataSet(4);
+    smxScurveFit* scurveFit = new smxScurveFit(pscan->toRooDataSet(30, 30));
+    scurveFit->drawPlot();
     smxAsic asic;       
     asic.addPscan(pscan);
                         
