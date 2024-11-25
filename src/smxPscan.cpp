@@ -4,6 +4,7 @@
 #include <TAxis.h>
 #include <TNamed.h>
 #include <TParameter.h>
+#include <TMath.h>
 #include <RooRealVar.h>
 #include <RooDataSet.h>
 #include <RooArgSet.h>
@@ -272,14 +273,14 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
         return nullptr;
     }
 
-    // Step 1: Define RooRealVars for pulse amplitude (x-axis) and count number (y-axis)
-    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", -10, 300); // Range of pulse amplitudes
-    RooRealVar countN("countN", "Count (Timing Comparator)", 0, 300); // Range of tcomp or count
+    // Step 1: Define RooRealVars for pulse amplitude (x-axis), count number (y-axis), and error
+    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", -10, 254+10); // Range of pulse amplitudes
+    RooRealVar countN("countN", "Count (Timing Comparator)", 0, 300); // Range of counts
     RooArgSet variables(pulseAmp, countN); // Group the variables into an ArgSet
 
     // Step 2: Create a new RooDataSet
     std::cout << "Creating RooDataSet for channel: " << channelN << " and comparator: " << comparator << std::endl;
-    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data", variables);
+    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data with Errors", variables, RooFit::StoreError(variables));
 
     // Step 3: Check for required branches
     if (!pscanTree->GetBranch("pulse") || !pscanTree->GetBranch("channel") ||
@@ -291,7 +292,6 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     std::cout << "Branches found: pulse, channel, ADC, tcomp." << std::endl;
 
     // Step 4: Set up branches for reading TTree data
-
     int pulse, channel, tcomp;
     int adc[smxNAdc] = {0}; // Ensures no garbage values
     pscanTree->SetBranchAddress("pulse", &pulse);
@@ -310,11 +310,17 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
             pulseAmp.setVal(pulse);           // Set x-axis variable
             countN.setVal(adc[comparator]);  // Set y-axis variable from the comparator
 
-            // Debug: Show values being added to the dataset
-            std::cout << "Adding to dataset - PulseAmp: " << pulseAmp.getVal()
-                      << ", CountN: " << countN.getVal() << std::endl;
+            // Calculate or assign an error for countN (example: 10% of count value)
+            double error = TMath::Sqrt( adc[comparator]);
+            error /=2;
+            countN.setError(error);  // Set y-axis variable from the comparator
 
             dataset->add(variables);         // Add the entry to the dataset
+            // Debug: Show values being added to the dataset
+            std::cout << "Adding to dataset - PulseAmp: " << pulseAmp.getVal()
+                      << ", CountN: " << countN.getVal()
+                      << ", CountN_Error: " << countN.getError() << std::endl;
+
         }
     }
 
@@ -322,6 +328,7 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
 
     return dataset;
 }
+
 
 void smxPscan::plotRooDataSet(int channel, int comparator, const std::string& outputFilename) {
     // Generate the RooDataSet for the specified channel and comparator

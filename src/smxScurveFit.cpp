@@ -4,6 +4,7 @@
 #include <TFile.h>
 #include <TString.h>
 #include <TAxis.h>
+#include <TMath.h>
 
 smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
     : data(dataset), channel(ch), comparator(comp), fitResult(nullptr),
@@ -43,7 +44,7 @@ TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
     RooPlot* frame = pulseAmp->frame(RooFit::Title("S-Curve Fit"));
 
     // Plot the dataset on the frame
-    data->plotOnXY(frame, RooFit::YVar(*countN), RooFit::MarkerStyle(kFullDotSmall), RooFit::LineStyle(kSolid));
+    data->plotOnXY(frame, RooFit::YVar(*countN), RooFit::DrawOption("PZ") ,  RooFit::MarkerStyle(7));
 
     // If a fit was performed, overlay the S-curve fit
     if (fitResult) {
