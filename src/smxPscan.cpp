@@ -310,12 +310,8 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
             pulseAmp.setVal(pulse);           // Set x-axis variable
             countN.setVal(adc[comparator]);  // Set y-axis variable from the comparator
 
-            // Calculate or assign an error for countN (example: 10% of count value)
-//          double error = TMath::Sqrt( adc[comparator]);
-//          error /=2;
-//          countN.setError(error);  // Set y-axis variable from the comparator
-
-            applyAsymmetricPoissonianErrors(&countN, adc[comparator]);
+//          applyAsymmetricPoissonianErrors(&countN);
+            applyWillsonErrors(&countN);
             dataset->add(variables);         // Add the entry to the dataset
             // Debug: Show values being added to the dataset
             std::cout << "Adding to dataset - PulseAmp: " << pulseAmp.getVal()
@@ -439,11 +435,12 @@ TTree* smxPscan::settingsToTree() const {
     return tree;
 }
 
-void smxPscan::applyAsymmetricPoissonianErrors(RooRealVar* countN, int count) const {
+void smxPscan::applyAsymmetricPoissonianErrors(RooRealVar* countN) const {
     if (!countN) {
         std::cerr << "Error: Null pointer passed to applyAsymmetricPoissonianErrors." << std::endl;
         return;
     }
+    double count = countN->getVal(); // Proportion of successes
     double lowerError = 0;
     double upperError = 1.841;
     if(count != 0) {
@@ -453,15 +450,57 @@ void smxPscan::applyAsymmetricPoissonianErrors(RooRealVar* countN, int count) co
     countN->setAsymError(lowerError, upperError);  // Relative to the central value
 }
 
-
-void smxPscan::applyWillsonErrors(RooRealVar* countN) const { // Wilson score interval with continuity correction
+void smxPscan::applyWillsonErrors(RooRealVar* countN) const {
+    // Wilson score interval with continuity correction
     if (!countN) {
         std::cerr << "Error: Null pointer passed to applyWillsonErrors." << std::endl;
         return;
     }
 
+    int n = nPulses; // Total number of trials (or pulses)
+    if (n == 0) {
+        std::cerr << "Error: Total number of trials (nPulses) cannot be zero." << std::endl;
+        return;
+    }
 
+    double p_hat = countN->getVal() / n; // Proportion of successes
+    double z = 1.0; // z-value for given confidence interval
+
+    double w_cc_minus = 0.0;
+    double w_cc_plus = 0.0;
+
+    // Lower bound of the Wilson score interval with continuity correction
+    if (p_hat != 0) {
+        w_cc_minus = std::max(
+            0.0,
+            (2 * n * p_hat + z * z - 1 -
+             z * sqrt(z * z - 2 - (1.0 / n) + 4 * p_hat * (n * (1 - p_hat) + 1))) /
+                (2 * (n + z * z))
+        );
+    }
+
+    // Upper bound of the Wilson score interval with continuity correction
+    if (p_hat < 1) {
+        w_cc_plus = std::min(
+            1.0,
+            (2 * n * p_hat + z * z + 1 +
+             z * sqrt(z * z + 2 - (1.0 / n) + 4 * p_hat * (n * (1 - p_hat) - 1))) /
+                (2 * (n + z * z))
+        );
+    } else if (p_hat > 1) {
+        applyAsymmetricPoissonianErrors(countN);
+        return;
+    }
+
+    // Update the RooRealVar object with the asymmetric errors
+    countN->setAsymError(n * w_cc_minus - n * p_hat, n * w_cc_plus - n * p_hat);
+
+    // Debug: Log the calculated errors
+    std::cout << "Count: " << countN->getVal()
+              << ", Lower Error: " << n * w_cc_minus - n * p_hat
+              << ", Upper Error: " << n * w_cc_plus - n * p_hat << std::endl;
 }
+
 
 
 

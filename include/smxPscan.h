@@ -74,7 +74,7 @@ private:
      */
     std::string generateDefaultOutputFileName() const;
 
-    void applyAsymmetricPoissonianErrors(RooRealVar* countN, int count) const; 
+    void applyAsymmetricPoissonianErrors(RooRealVar* countN) const; 
 
     void applyWillsonErrors(RooRealVar* countN) const;
 
