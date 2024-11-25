@@ -280,7 +280,7 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
 
     // Step 2: Create a new RooDataSet
     std::cout << "Creating RooDataSet for channel: " << channelN << " and comparator: " << comparator << std::endl;
-    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data with Errors", variables, RooFit::StoreError(variables));
+    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data with Errors", variables, RooFit::StoreAsymError(variables));
 
     // Step 3: Check for required branches
     if (!pscanTree->GetBranch("pulse") || !pscanTree->GetBranch("channel") ||
@@ -311,10 +311,11 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
             countN.setVal(adc[comparator]);  // Set y-axis variable from the comparator
 
             // Calculate or assign an error for countN (example: 10% of count value)
-            double error = TMath::Sqrt( adc[comparator]);
-            error /=2;
-            countN.setError(error);  // Set y-axis variable from the comparator
+//          double error = TMath::Sqrt( adc[comparator]);
+//          error /=2;
+//          countN.setError(error);  // Set y-axis variable from the comparator
 
+            applyAsymmetricPoissonianErrors(&countN, adc[comparator]);
             dataset->add(variables);         // Add the entry to the dataset
             // Debug: Show values being added to the dataset
             std::cout << "Adding to dataset - PulseAmp: " << pulseAmp.getVal()
@@ -437,4 +438,30 @@ TTree* smxPscan::settingsToTree() const {
     // Step 4: Return the constructed TTree
     return tree;
 }
+
+void smxPscan::applyAsymmetricPoissonianErrors(RooRealVar* countN, int count) const {
+    if (!countN) {
+        std::cerr << "Error: Null pointer passed to applyAsymmetricPoissonianErrors." << std::endl;
+        return;
+    }
+    double lowerError = 0;
+    double upperError = 1.841;
+    if(count != 0) {
+        lowerError = -TMath::Sqrt(count -.25);   // Lower error approximation
+        upperError = TMath::Sqrt(count + .75);   // Upper error approximation
+    }
+    countN->setAsymError(lowerError, upperError);  // Relative to the central value
+}
+
+
+void smxPscan::applyWillsonErrors(RooRealVar* countN) const { // Wilson score interval with continuity correction
+    if (!countN) {
+        std::cerr << "Error: Null pointer passed to applyWillsonErrors." << std::endl;
+        return;
+    }
+
+
+}
+
+
 

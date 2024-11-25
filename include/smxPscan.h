@@ -74,12 +74,9 @@ private:
      */
     std::string generateDefaultOutputFileName() const;
 
-    /**
-     * @brief Converts pscan data into a RooDataSet for specific channels and comparator.
-     * @param channels A vector of channel numbers to include in the dataset.
-     * @param comparator The index of the comparator to include.
-     * @return A RooDataSet with x-axis: pulse, y-axis: tcomp for the specified channels and comparator.
-     */
+    void applyAsymmetricPoissonianErrors(RooRealVar* countN, int count) const; 
+
+    void applyWillsonErrors(RooRealVar* countN) const;
 
 public:
     /**
@@ -92,6 +89,12 @@ public:
      */
     ~smxPscan();
 
+    /**
+     * @brief Converts pscan data into a RooDataSet for specific channels and comparator.
+     * @param channels A vector of channel numbers to include in the dataset.
+     * @param comparator The index of the comparator to include.
+     * @return A RooDataSet with x-axis: pulse, y-axis: tcomp for the specified channels and comparator.
+     */
     RooDataSet* toRooDataSet(int channelN, int comparator) const;
 
     void plotRooDataSet(int channel=30, int comparator=30, const std::string& outputFilename = "testDataSet.pdf");
