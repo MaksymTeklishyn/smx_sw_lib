@@ -1,8 +1,10 @@
 #include "smxScurveFit.h"
+#include "smxConstants.h"
 #include <RooPlot.h>
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TString.h>
+#include <TGaxis.h>
 #include <TAxis.h>
 #include <TMath.h>
 
@@ -30,42 +32,48 @@ TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
         std::cerr << "Error: No RooDataSet available for plotting." << std::endl;
         return nullptr;
     }
-
+        
     // Retrieve the RooRealVars for pulse amplitude and countN
     RooRealVar* pulseAmp = (RooRealVar*)data->get()->find("pulseAmp");
     RooRealVar* countN = (RooRealVar*)data->get()->find("countN");
-
+    
     if (!pulseAmp || !countN) {
         std::cerr << "Error: Variables 'pulseAmp' or 'countN' not found in the dataset." << std::endl;
         return nullptr;
     }
-
+        
     // Create a frame for the x-axis variable (pulseAmp)
-    RooPlot* frame = pulseAmp->frame(RooFit::Title("S-Curve Fit"));
+    RooPlot* frame = pulseAmp->frame(RooFit::Title(" "));
 
     // Plot the dataset on the frame
-    data->plotOnXY(frame, RooFit::YVar(*countN), RooFit::DrawOption("PZ") ,  RooFit::MarkerStyle(7));
+    data->plotOnXY(frame, RooFit::YVar(*countN), RooFit::DrawOption("PZ"), RooFit::MarkerStyle(7));
 
     // If a fit was performed, overlay the S-curve fit
     if (fitResult) {
         scurvePdf->plotOn(frame);
     } else {
         std::cerr << "Warning: No fit has been performed. Plotting only data points." << std::endl;
-    }
+    }   
 
-    // Label the axes
-    frame->GetXaxis()->SetTitle("Pulse Amplitude");
+    frame->GetXaxis()->SetTitle("Pulse Amplitude, a.u.");
+    frame->GetXaxis()->SetNdivisions(16, false);
     frame->GetYaxis()->SetTitle("Count");
-
+    
     // Create a TCanvas and draw the frame
-    TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 500);
+    TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 400);
     frame->Draw();
+
+    // Draw the secondary axis
+    TGaxis* secondaryAxis = new TGaxis(0, 105, 256, 105, 0, 256*smxAmCaltoE/1e3, 520, "-");
+    secondaryAxis->SetTitle("Pulse Amplitude, ke");
+    secondaryAxis->SetLabelSize(0.035); // Smaller label size
+    secondaryAxis->SetTitleSize(0.035); // Smaller title size
+    secondaryAxis->SetLabelFont(42);     // Standard ROOT font
+    secondaryAxis->SetTitleFont(42);
+    secondaryAxis->Draw();
 
     // Save the plot to the specified file
     canvas->SaveAs(outputFilename);
-
-    std::cout << "Plot saved as: " << outputFilename << std::endl;
-
     return canvas; // Return the TCanvas for further use
 }
 

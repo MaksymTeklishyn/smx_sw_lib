@@ -274,7 +274,7 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     }
 
     // Step 1: Define RooRealVars for pulse amplitude (x-axis), count number (y-axis), and error
-    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", -10, 254+10); // Range of pulse amplitudes
+    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", 0-0, 255+1); // Range of pulse amplitudes
     RooRealVar countN("countN", "Count (Timing Comparator)", 0, 300); // Range of counts
     RooArgSet variables(pulseAmp, countN); // Group the variables into an ArgSet
 

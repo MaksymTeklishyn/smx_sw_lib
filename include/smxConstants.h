@@ -28,5 +28,10 @@ constexpr int smxNApmCalU = 255;
  */
 constexpr double smxEtoFC = 1/0.1602176634;
 
+/**
+ * @brief Conversion factor from amplitude calibration units (a.u.) to elementary charge (e).
+ */
+constexpr double smxAmCaltoE = 342.7;
+
 #endif // SMX_CONSTANTS_H
 
