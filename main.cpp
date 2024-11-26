@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
     pscan->writeRootFile();
     smxScurveFit* scurveFit = new smxScurveFit(pscan->toRooDataSet(32, 30));
     scurveFit->drawPlot();
+    scurveFit->fitErrFunction();
     smxAsic asic;       
     asic.addPscan(pscan);
                         

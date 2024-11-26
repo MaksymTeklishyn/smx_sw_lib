@@ -69,6 +69,13 @@ public:
      */
     void printFitResults() const;
 
+    /**
+     * @brief Fit the dataset using an error function (erfc) with chi-square minimization.
+     * @return The chi-square value of the fit.
+     */
+    double fitErrFunction();
+
+
     // Getters
     int getChannel() const;
     int getComparator() const;

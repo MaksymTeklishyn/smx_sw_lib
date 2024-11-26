@@ -7,6 +7,11 @@
 #include <TGaxis.h>
 #include <TAxis.h>
 #include <TMath.h>
+#include <RooChi2Var.h>
+#include <RooMinimizer.h>
+#include <RooRealVar.h>
+#include <RooFormulaVar.h>
+#include <RooPlot.h>
 
 smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
     : data(dataset), channel(ch), comparator(comp), fitResult(nullptr),
@@ -133,5 +138,47 @@ int smxScurveFit::getChannel() const {
 
 int smxScurveFit::getComparator() const {
     return comparator;
+}
+
+
+double smxScurveFit::fitErrFunction() {
+    if (!data) {
+        std::cerr << "Error: No dataset available for fitting!" << std::endl;
+        return -1.0;
+    }
+
+    RooRealVar* pulseAmp = (RooRealVar*)data->get()->find("pulseAmp");
+    RooRealVar* countN = (RooRealVar*)data->get()->find("countN");
+
+    if (!pulseAmp || !countN) {
+        std::cerr << "Error: Variables 'pulseAmp' or 'countN' not found in the dataset." << std::endl;
+        return -1.0;
+    }
+
+    // Define parameters for the error function model
+    RooRealVar amplitude("amplitude", "Amplitude", 1.0, 0.0, 300.0);
+    RooRealVar threshold("threshold", "Threshold", 50.0, -10.0, 300.0);
+    RooRealVar sigma("sigma", "Sigma", 10.0, 0.1, 100.0);
+
+    // Define the error function model using RooFormulaVar
+    RooFormulaVar errorFunc(
+        "errorFunc",
+        "@0 * 0.5 * TMath::Erfc( ( @1 - @2 ) / (TMath::Sqrt(2) * @3) )",
+        RooArgList(amplitude, *pulseAmp, threshold, sigma)
+    );
+    errorFunc.chi2FitTo(*data, RooFit::YVar(*countN));
+
+    // Retrieve parameter values
+    double fittedAmplitude = amplitude.getVal();
+    double fittedThreshold = threshold.getVal();
+    double fittedSigma = sigma.getVal();
+
+    // Print results
+    std::cout << "Fit Results:" << std::endl;
+    std::cout << "  Amplitude: " << fittedAmplitude << " ± " << amplitude.getError() << std::endl;
+    std::cout << "  Threshold: " << fittedThreshold << " ± " << threshold.getError() << std::endl;
+    std::cout << "  Sigma:     " << fittedSigma << " ± " << sigma.getError() << std::endl;
+
+    return 0;
 }
 
