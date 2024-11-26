@@ -488,7 +488,7 @@ void smxPscan::applyWillsonErrors(RooRealVar* countN) const {
         : 1.0;
 
     // Update the RooRealVar object with the calculated asymmetric errors
-    countN->setAsymError(n * w_cc_minus - n * p_hat, n * w_cc_plus - n * p_hat);
+    countN->setAsymError(n * w_cc_minus - n * p_hat -.5, n * w_cc_plus - n * p_hat +.5);
 }
 
 

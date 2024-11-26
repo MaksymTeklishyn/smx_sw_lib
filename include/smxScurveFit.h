@@ -3,7 +3,7 @@
 
 #include <RooDataSet.h>
 #include <RooRealVar.h>
-#include <RooGenericPdf.h>
+#include <RooFormulaVar.h>
 #include <RooFitResult.h>
 #include <TString.h>
 #include <TCanvas.h>
@@ -11,24 +11,34 @@
 
 /**
  * @class smxScurveFit
- * @brief Class to handle S-curve fitting using RooFit classes.
+ * @brief Class for fitting S-curve data using RooFit, specifically with an error function (erfc) model.
  */
 class smxScurveFit {
 private:
-    RooDataSet* data;          ///< Pointer to the RooDataSet for fitting
-    int channel;               ///< Channel number
-    int comparator;            ///< Comparator number
-    RooFitResult* fitResult;   ///< Pointer to the fit result (to manage memory)
+    RooDataSet* data;           ///< Pointer to the RooDataSet for fitting.
+    int channel;                ///< Channel number, -1 if unknown.
+    int comparator;             ///< Comparator number, -1 if unknown.
 
-    // RooFit variables and models
-    RooRealVar* pulseAmp;      ///< Variable representing pulse amplitude
-    RooRealVar* efficiency;    ///< Variable representing efficiency
-    RooGenericPdf* scurvePdf;  ///< S-curve model
+    RooRealVar* pulseAmp;       ///< Pointer to the pulse amplitude variable.
+    RooRealVar* amplitude;      ///< Pointer to the amplitude parameter.
+    RooRealVar* threshold;      ///< Pointer to the threshold parameter.
+    RooRealVar* sigma;          ///< Pointer to the sigma parameter.
+
+    RooFormulaVar* fitModel;    ///< Pointer to the error function model used for fitting.
+
+    RooFitResult* fitResult;    ///< Stores the results of the last performed fit.
 
     /**
-     * @brief Sets up the S-curve model for fitting.
+     * @brief Initialize all variables and the model for the error function fit.
+     * @details Retrieves variables from the dataset if they exist, or initializes them otherwise.
      */
-    void setupModel();
+    void initializeVariables();
+
+    /**
+     * @brief Initialize the error function model.
+     * @details Sets up the `fitModel` using `RooFormulaVar` and the initialized variables.
+     */
+    void setupFitModel();
 
 public:
     /**
@@ -45,40 +55,36 @@ public:
     ~smxScurveFit();
 
     /**
+     * @brief Performs a chi-square fit using an error function model (erfc).
+     * @return The chi-square value of the fit, or -1 on error.
+     */
+    double fitErrFunction();
+
+    /**
      * @brief Generates and returns a TCanvas with the S-curve fit plot.
-     * Also saves the plot to a PDF for debugging purposes.
-     * @param outputFilename Name of the output PDF file for the plot.
+     * @details Overlays the fit result on the dataset and optionally saves it as a PDF.
+     * @param outputFilename Name of the output PDF file for the plot (default: "testDataSet.pdf").
      * @return Pointer to the TCanvas object containing the plot.
      */
     TCanvas* drawPlot(const TString& outputFilename = "testDataSet.pdf") const;
 
+    // Getters
     /**
-     * @brief Performs the fitting procedure.
-     * @return Pointer to the RooFitResult (ownership is retained by the class).
+     * @brief Get the channel number.
+     * @return The channel number.
      */
-    RooFitResult* performFit();
+    int getChannel() const;
 
     /**
-     * @brief Plots the fit results to a file.
-     * @param outputFilename Name of the output file for the plot.
+     * @brief Get the comparator number.
+     * @return The comparator number.
      */
-    void plotFitResults(const TString& outputFilename) const;
+    int getComparator() const;
 
     /**
-     * @brief Prints the fit results to the console.
+     * @brief Print the fit results to the console.
      */
     void printFitResults() const;
-
-    /**
-     * @brief Fit the dataset using an error function (erfc) with chi-square minimization.
-     * @return The chi-square value of the fit.
-     */
-    double fitErrFunction();
-
-
-    // Getters
-    int getChannel() const;
-    int getComparator() const;
 };
 
 #endif // SMX_SCURVE_FIT_H
