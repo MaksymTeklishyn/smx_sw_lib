@@ -4,172 +4,182 @@
 #include "smxConstants.h"
 #include <TTree.h>
 #include <TString.h>
-#include <TArrayI.h> 
+#include <TArrayI.h>
 #include <RooDataSet.h>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <ctime>  // For std::time_t and std::tm
-#include "smxAsicSettings.h"  // Include smxAsicSettings header
+#include <ctime>
+#include "smxAsicSettings.h"
 
 /**
  * @class smxPscan
- * @brief Class for reading pulse scan data from an ASCII file and storing it in a ROOT TTree.
+ * @brief Class for managing pulse scan data from an ASCII file and converting it into ROOT-compatible formats.
+ *
+ * This class provides functionality for:
+ * - Reading ASCII files containing pulse scan data.
+ * - Storing data in a ROOT TTree.
+ * - Converting data into a RooDataSet for statistical analysis.
+ * - Managing ASIC settings related to the scan.
  */
 class smxPscan {
 private:
-    TTree* pscanTree;                   ///< Internal field to store the TTree.
-    std::string asciiFileName;          ///< Field to store the ASCII file name.
-    std::string asciiFileAddress;       ///< Field to store the ASCII file address.
-    TArrayI readDiscList;               ///< Field to store DISC_LIST positions.
+    TTree* pscanTree;                   ///< Internal TTree to store parsed data.
+    std::string asciiFileName;          ///< Name of the ASCII file being read.
+    std::string asciiFileAddress;       ///< Path to the ASCII file.
+    TArrayI readDiscList;               ///< Positions of discriminators from the DISC_LIST.
 
-    // Parsed data fields
-    std::time_t readTime;               ///< Parsed read time as a numeric value (epoch time).
-    TString asicId;                     ///< Parsed ASIC ID (e.g., "XA-000-08-002-000-002-205-02").
-    int nPulses = 100;                  ///< Parsed number of pulses (e.g., 100).
-
-    smxAsicSettings asicSettings;       ///< ASIC settings for the pulse scan.
+    std::time_t readTime;               ///< Timestamp of the scan (epoch time).
+    TString asicId;                     ///< ASIC identifier string (e.g., "XA-000-...").
+    int nPulses = 100;                  ///< Number of pulses used in the scan.
+    smxAsicSettings asicSettings;       ///< Settings for the ASIC used in the scan.
 
     /**
-     * @brief Creates a ROOT TTree containing the settings of the SMX pulse scan.
-     *
-     * The TTree includes the following branches:
-     * - `readTime`: The timestamp of the scan (in seconds since epoch).
-     * - `nPulses`: The number of pulses used in the scan.
-     * - `readDiscList`: A list of discriminator positions.
-     * - `asicId`: The unique identifier of the ASIC.
-     *
-     * @return A pointer to the constructed TTree, populated with the current settings data.
-     *
-     * @note The caller is responsible for managing the memory of the returned TTree.
+     * @brief Creates a TTree representing the settings of the scan.
+     * @return A pointer to the generated TTree.
      */
     TTree* settingsToTree() const;
 
     /**
-     * @brief Helper function to parse the first line of the ASCII file and populate readDiscList.
-     * @param line The header line to be parsed.
+     * @brief Parses the header line of the ASCII file.
+     * @param line The header line from the file.
      */
     void parseHeaderLine(const std::string& line);
 
     /**
-     * @brief Helper function to parse the ASCII file name and extract relevant fields (read time, ASIC ID, and number of pulses).
+     * @brief Extracts relevant information from the ASCII file name.
      */
     void parseAsciiFileName();
 
     /**
-     * @brief Helper function to convert readTime to a human-readable string format.
-     * @return A string representing the formatted read time.
+     * @brief Formats the read time into a human-readable string.
+     * @return A formatted string representing the read time.
      */
     std::string formatReadTime() const;
 
     /**
-     * @brief Logs an error message to standard error output.
-     * @param message The error message to log.
+     * @brief Logs an error message.
+     * @param message The message to log.
      */
     void logError(const std::string& message) const;
 
     /**
-     * @brief Helper function to generate the default output file name based on the ASCII file name.
-     * @return The generated default output file name.
+     * @brief Generates a default output file name based on the ASCII file name.
+     * @return The generated file name.
      */
     std::string generateDefaultOutputFileName() const;
 
-    void applyAsymmetricPoissonianErrors(RooRealVar* countN) const; 
+    /**
+     * @brief Applies asymmetric Poissonian errors to a RooRealVar.
+     * @param countN Pointer to the variable to modify.
+     * @param count The count value used to calculate the errors.
+     */
+    void applyAsymmetricPoissonianErrors(RooRealVar* countN) const;
 
+    /**
+     * @brief Applies Wilson score confidence interval errors to a RooRealVar.
+     * @param countN Pointer to the variable to modify.
+     */
     void applyWillsonErrors(RooRealVar* countN) const;
 
 public:
     /**
-     * @brief Constructor to initialize the TTree.
+     * @brief Default constructor.
      */
     smxPscan();
 
     /**
-     * @brief Destructor to manage memory and close the file if necessary.
+     * @brief Destructor to free resources.
      */
     ~smxPscan();
 
     /**
-     * @brief Converts pscan data into a RooDataSet for specific channels and comparator.
-     * @param channels A vector of channel numbers to include in the dataset.
-     * @param comparator The index of the comparator to include.
-     * @return A RooDataSet with x-axis: pulse, y-axis: tcomp for the specified channels and comparator.
+     * @brief Converts the pulse scan data to a RooDataSet.
+     * @param channelN The channel number to include.
+     * @param comparator The comparator index.
+     * @return A pointer to the generated RooDataSet.
      */
     RooDataSet* toRooDataSet(int channelN, int comparator) const;
 
-    void plotRooDataSet(int channel=30, int comparator=30, const std::string& outputFilename = "testDataSet.pdf");
+    /**
+     * @brief Plots data from a RooDataSet and saves it as a PDF.
+     * @param channel The channel number to plot.
+     * @param comparator The comparator index.
+     * @param outputFilename The name of the output PDF file.
+     */
+    void plotRooDataSet(int channel = 30, int comparator = 30, const std::string& outputFilename = "testDataSet.pdf");
 
     /**
-     * @brief Reads an ASCII file, extracts data, and fills the TTree.
-     * @param filename The name of the ASCII file to read.
-     * @return A pointer to the filled TTree.
+     * @brief Reads an ASCII file and populates the internal TTree.
+     * @param filename The path to the ASCII file.
+     * @return A pointer to the populated TTree.
      */
     TTree* readAsciiFile(const std::string& filename);
 
     /**
      * @brief Writes the TTree to a ROOT file.
-     * @param outputFileName The name of the output ROOT file. If empty, a default name based on the input file name is used.
+     * @param outputFileName The name of the output file (optional).
      */
     void writeRootFile(const std::string& outputFileName = "");
 
     /**
-     * @brief Getter to access the internal TTree.
+     * @brief Retrieves the internal TTree.
      * @return A pointer to the TTree.
      */
     TTree* getDataTree() const;
 
     /**
-     * @brief Getter for the ASCII file name.
-     * @return The name of the ASCII file.
+     * @brief Retrieves the ASCII file name.
+     * @return The file name as a string.
      */
     std::string getAsciiFileName() const;
 
     /**
-     * @brief Getter for the ASCII file address.
-     * @return The address/path of the ASCII file.
+     * @brief Retrieves the ASCII file address.
+     * @return The file path as a string.
      */
     std::string getAsciiFileAddress() const;
 
     /**
-     * @brief Getter for the read DISC_LIST positions.
-     * @return A reference to the vector containing DISC_LIST positions.
+     * @brief Retrieves the discriminator list positions.
+     * @return A reference to the TArrayI containing the positions.
      */
     const TArrayI& getReadDiscList() const;
 
     /**
-     * @brief Getter for the parsed read time as epoch time.
-     * @return The read time as a std::time_t value.
+     * @brief Retrieves the read time as epoch time.
+     * @return The read time.
      */
     std::time_t getReadTime() const;
 
     /**
-     * @brief Getter for the parsed ASIC ID.
+     * @brief Retrieves the ASIC identifier.
      * @return The ASIC ID as a TString.
      */
     TString getAsicId() const;
 
     /**
-     * @brief Getter for the parsed number of pulses.
+     * @brief Retrieves the number of pulses in the scan.
      * @return The number of pulses.
      */
     int getNPulses() const;
 
     /**
-     * @brief Getter for the ASIC settings.
+     * @brief Retrieves the ASIC settings.
      * @return A reference to the smxAsicSettings object.
      */
     smxAsicSettings& getAsicSettings();
 
     /**
-     * @brief Setter for the ASIC settings.
-     * @param settings The smxAsicSettings object to set.
+     * @brief Updates the ASIC settings.
+     * @param settings The new settings to apply.
      */
     void setAsicSettings(const smxAsicSettings& settings);
 
     /**
-     * @brief Debugging function showing pscasnTree in terminal.
+     * @brief Displays the entries of the internal TTree in the terminal.
      */
-    void showTreeEntries() const; 
+    void showTreeEntries() const;
 };
 
 #endif // SMX_PSCAN_H

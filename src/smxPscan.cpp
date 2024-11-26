@@ -451,7 +451,7 @@ void smxPscan::applyAsymmetricPoissonianErrors(RooRealVar* countN) const {
 }
 
 void smxPscan::applyWillsonErrors(RooRealVar* countN) const {
-    // Wilson score interval with continuity correction
+    // Ensure the input pointer is valid
     if (!countN) {
         std::cerr << "Error: Null pointer passed to applyWillsonErrors." << std::endl;
         return;
@@ -464,41 +464,31 @@ void smxPscan::applyWillsonErrors(RooRealVar* countN) const {
     }
 
     double p_hat = countN->getVal() / n; // Proportion of successes
-    double z = 1.0; // z-value for given confidence interval
-
-    double w_cc_minus = 0.0;
-    double w_cc_plus = 0.0;
-
-    // Lower bound of the Wilson score interval with continuity correction
-    if (p_hat != 0) {
-        w_cc_minus = std::max(
-            0.0,
-            (2 * n * p_hat + z * z - 1 -
-             z * sqrt(z * z - 2 - (1.0 / n) + 4 * p_hat * (n * (1 - p_hat) + 1))) /
-                (2 * (n + z * z))
-        );
-    }
-
-    // Upper bound of the Wilson score interval with continuity correction
-    if (p_hat < 1) {
-        w_cc_plus = std::min(
-            1.0,
-            (2 * n * p_hat + z * z + 1 +
-             z * sqrt(z * z + 2 - (1.0 / n) + 4 * p_hat * (n * (1 - p_hat) - 1))) /
-                (2 * (n + z * z))
-        );
-    } else if (p_hat > 1) {
-        applyAsymmetricPoissonianErrors(countN);
+    if (p_hat < 0 || p_hat > 1) {
+        applyAsymmetricPoissonianErrors(countN); // Handle invalid probabilities
         return;
     }
 
-    // Update the RooRealVar object with the asymmetric errors
-    countN->setAsymError(n * w_cc_minus - n * p_hat, n * w_cc_plus - n * p_hat);
+    double z = 1.0; // z-value for confidence interval
+    double z2 = z * z; // Precompute z-squared for efficiency
 
-    // Debug: Log the calculated errors
-    std::cout << "Count: " << countN->getVal()
-              << ", Lower Error: " << n * w_cc_minus - n * p_hat
-              << ", Upper Error: " << n * w_cc_plus - n * p_hat << std::endl;
+    // Compute the Wilson score interval with continuity correction
+    double sqrtTermMinus = p_hat != 0 
+        ? z * sqrt(z2 - 2 - (1.0 / n) + 4 * p_hat * (n * (1 - p_hat) + 1)) 
+        : 0.0;
+    double sqrtTermPlus = p_hat != 1 
+        ? z * sqrt(z2 + 2 - (1.0 / n) + 4 * p_hat * (n * (1 - p_hat) - 1)) 
+        : 0.0;
+
+    double w_cc_minus = p_hat != 0 
+        ? std::max(0.0, (2 * n * p_hat + z2 - 1 - sqrtTermMinus) / (2 * (n + z2))) 
+        : 0.0;
+    double w_cc_plus = p_hat < 1 
+        ? std::min(1.0, (2 * n * p_hat + z2 + 1 + sqrtTermPlus) / (2 * (n + z2))) 
+        : 1.0;
+
+    // Update the RooRealVar object with the calculated asymmetric errors
+    countN->setAsymError(n * w_cc_minus - n * p_hat, n * w_cc_plus - n * p_hat);
 }
 
 
