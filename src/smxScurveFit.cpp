@@ -35,9 +35,9 @@ void smxScurveFit::initializeVariables() {
     countNorm = (RooRealVar*)data->get()->find("countNorm");
     adcComp = (RooCategory*)data->get()->find("adcComp");
 
-    offset = new RooRealVar("offset", "Offset", .0, -2., 2.0);
-    threshold = new RooRealVar("threshold", "Threshold", 60.0, -10.0, 300.0);
-    sigma = new RooRealVar("sigma", "Sigma", 3.0, 0.1, 100.0);
+    offset = new RooRealVar("offset", "Offset", -.28 -1., .5);
+    threshold = new RooRealVar("threshold", "Threshold", 60.0, -1.0, 256.0);
+    sigma = new RooRealVar("sigma", "Sigma", 3.0, 0.5, 20.0);
 }
 
 void smxScurveFit::setupFitModel() {
@@ -56,7 +56,7 @@ double smxScurveFit::fitErrFunction() {
     }
 
     RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce("adcComp==16"));
-    RooFitResult* result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save());
+    RooFitResult* result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save(), RooFit::Strategy(2));
 
     if (result) {
         fitResult = result;
@@ -100,7 +100,7 @@ TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
     secondaryAxis->Draw();
 
     // Save the plot to the specified file
-    canvas->SaveAs(outputFilename);
+//  canvas->SaveAs(outputFilename);
 
     return canvas;
 }

@@ -14,9 +14,16 @@ int main(int argc, char* argv[]) {
 
     pscan->readAsciiFile(filename)->Print();
     pscan->writeRootFile();
-    smxScurveFit* scurveFit = new smxScurveFit(pscan->toRooDataSet(102));
-    scurveFit->fitErrFunction();
-    scurveFit->drawPlot();
+    smxScurveFit* scurveFit;
+    TCanvas* canvA = new TCanvas("canvA", "S-Curve Fit", 1000, 400);
+    canvA->Print("test.pdf[");
+    for (int i=0; i<smxNCh; ++i) {
+        scurveFit = new smxScurveFit(pscan->toRooDataSet(i));
+        scurveFit->fitErrFunction();
+        scurveFit->drawPlot()->Print("test.pdf");
+        delete scurveFit;
+    }
+    canvA->Print("test.pdf]");
 //  smxAsic asic;       
 //  asic.addPscan(pscan);
                         
