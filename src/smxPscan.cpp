@@ -25,27 +25,21 @@ smxPscan::~smxPscan() {
 void smxPscan::parseHeaderLine(const std::string& line) {
     std::regex disc_list_regex(R"(\bDISC_LIST:\[(.*?)\])");
     std::smatch match;
-    std::vector<int> discPositions;
 
     if (std::regex_search(line, match, disc_list_regex)) {
         std::stringstream ss(match[1]);
         int pos;
+        readDiscList.clear(); // Clear any existing entries
         while (ss >> pos) {
-            discPositions.push_back(pos);
+            readDiscList.push_back(pos);
             if (ss.peek() == ',') ss.ignore();
-        }
-
-        // Resize readDiscList to match discPositions and copy elements
-        readDiscList.Set(discPositions.size());
-        for (size_t i = 0; i < discPositions.size(); ++i) {
-            readDiscList[i] = discPositions[i];
         }
     }
 
     // Debugging output to confirm positions
     std::cout << "Parsed DISC_LIST positions: ";
-    for (int i = 0; i < readDiscList.GetSize(); ++i) {
-        std::cout << readDiscList[i] << " ";
+    for (const auto& pos : readDiscList) {
+        std::cout << pos << " ";
     }
     std::cout << std::endl;
 }
@@ -169,42 +163,32 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
             pulse = std::stoi(data_match[1]);
             channel = std::stoi(data_match[2]);
 
-            std::cout << "Line " << lineCount << ": Pulse: " << pulse << ", Channel: " << channel << std::endl;
-
             // Reset adc array to zero for each entry
             std::fill(std::begin(adc), std::end(adc), 0);
 
             // Extract ADC values into a string and parse them into the array
             std::string adc_values_str = data_match[3];
             std::istringstream iss(adc_values_str);
-            std::fill(std::begin(adc), std::end(adc), 0);
             int value;
-            int index = 0;
-            // Read ADC values up to the second-to-last value for adc, and assign the last to tcomp
+            size_t index = 0;
             while (iss >> value) {
-                if (index < readDiscList.GetSize() - 1 && readDiscList[index] < smxNAdc) {
+                if (index < readDiscList.size() && readDiscList[index] < smxNAdc) {
                     adc[readDiscList[index]] = value;
-                    std::cout << "ADC[" << readDiscList[index] << "] = " << adc[readDiscList[index]] << "\t";
-                } else {
-                    tcomp = value;  // Last value as timing comparator
-                    std::cout << "TComp = " << tcomp << std::endl;
+                } else if (index == readDiscList.size()) {
+                    tcomp = value; // Last value as timing comparator
                 }
                 ++index;
             }
 
             // Fill the TTree
             pscanTree->Fill();
-            std::cout << "Filled TTree for line " << lineCount << std::endl;
         } else {
             logError("Failed to match the line: " + line);
         }
     }
 
-    // Close the file
+    // Close the file and return the TTree
     asciiFile.close();
-    std::cout << "File processing completed. Total lines: " << lineCount << std::endl;
-
-    // Return the filled TTree
     return pscanTree;
 }
 
@@ -248,7 +232,7 @@ std::string smxPscan::getAsciiFileAddress() const {
 }
 
 // Getter for read DISC_LIST positions
-const TArrayI& smxPscan::getReadDiscList() const {
+const std::vector<int>& smxPscan::getReadDiscList() const {
     return readDiscList;
 }
 
@@ -274,9 +258,10 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     }
 
     // Step 1: Define RooRealVars for pulse amplitude (x-axis), count number (y-axis), and error
-    RooRealVar pulseAmp("pulseAmp", "Pulse Amplitude", 0-0, 255+1); // Range of pulse amplitudes
-    RooRealVar countN("countN", "Count (Timing Comparator)", 0, 300); // Range of counts
-    RooArgSet variables(pulseAmp, countN); // Group the variables into an ArgSet
+    RooRealVar pulseAmp("pulseAmp", "Pulse amplitude", 0-0, 255+1); // Range of pulse amplitudes
+    RooRealVar countN("countN", "Comparator counts", 0, 300); // Range of counts
+    RooRealVar countNorm("countNorm", "Normalized comparator counts", 0, 3); // Range of counts
+    RooArgSet variables(pulseAmp, countN, countNorm); // Group the variables into an ArgSet
 
     // Step 2: Create a new RooDataSet
     std::cout << "Creating RooDataSet for channel: " << channelN << " and comparator: " << comparator << std::endl;
@@ -307,17 +292,15 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
 
         // Filter for the specified channel
         if (channel == channelN) {
-            pulseAmp.setVal(pulse);           // Set x-axis variable
-            countN.setVal(adc[comparator]);  // Set y-axis variable from the comparator
+            pulseAmp.setVal(pulse);          
 
-//          applyAsymmetricPoissonianErrors(&countN);
+            countN.setVal(adc[comparator]);  
             applyWillsonErrors(&countN);
-            dataset->add(variables);         // Add the entry to the dataset
-            // Debug: Show values being added to the dataset
-            std::cout << "Adding to dataset - PulseAmp: " << pulseAmp.getVal()
-                      << ", CountN: " << countN.getVal()
-                      << ", CountN_Error: " << countN.getError() << std::endl;
 
+            countNorm.setVal(adc[comparator]/nPulses); 
+            countNorm.setAsymError(countN.getAsymErrorLo()/nPulses, countN.getAsymErrorHi()/nPulses);
+
+            dataset->add(variables);        
         }
     }
 
@@ -408,30 +391,25 @@ void smxPscan::showTreeEntries() const {
     std::cout << "Finished dumping all TTree entries." << std::endl;
 }
 
-
 TTree* smxPscan::settingsToTree() const {
-    // Step 1: Create a new TTree instance
+    // Create a new TTree instance
     TTree* tree = new TTree("pscanSettingsTree", "Settings Tree for SMX Pscan");
 
-    // Persistent variables to ensure scope validity
     Long64_t readTimeLong = static_cast<Long64_t>(readTime);
-    int nPulsesCopy = nPulses; // Copy to ensure persistence
-    TString asicIdCopy = asicId; // Copy to ensure persistence
-    std::vector<int> discListVec(readDiscList.GetSize());
-    for (int i = 0; i < readDiscList.GetSize(); ++i) {
-        discListVec[i] = readDiscList[i];
-    }
+    int nPulsesCopy = nPulses;
+    TString asicIdCopy = asicId;
 
-    // Create branches with persistent variables
-    tree->Branch("readTime", &readTimeLong, "readTime/L"); // 64-bit integer
-    tree->Branch("nPulses", &nPulsesCopy, "nPulses/I");   // Integer
-    tree->Branch("asicId", &asicIdCopy);                 // TString
-    tree->Branch("readDiscList", &discListVec);          // Vector
+    // Create a non-const copy of readDiscList to pass to TTree::Branch
+    std::vector<int> discListVec = readDiscList;
 
-    // Step 3: Fill the tree with the current object data
+    // Create branches
+    tree->Branch("readTime", &readTimeLong, "readTime/L");
+    tree->Branch("nPulses", &nPulsesCopy, "nPulses/I");
+    tree->Branch("asicId", &asicIdCopy);
+    tree->Branch("readDiscList", &discListVec); // Pass the non-const vector
+
+    // Fill the tree
     tree->Fill();
-
-    // Step 4: Return the constructed TTree
     return tree;
 }
 

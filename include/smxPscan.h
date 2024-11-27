@@ -27,7 +27,7 @@ private:
     TTree* pscanTree;                   ///< Internal TTree to store parsed data.
     std::string asciiFileName;          ///< Name of the ASCII file being read.
     std::string asciiFileAddress;       ///< Path to the ASCII file.
-    TArrayI readDiscList;               ///< Positions of discriminators from the DISC_LIST.
+    std::vector<int> readDiscList;      ///< Positions of discriminators from the DISC_LIST.
 
     std::time_t readTime;               ///< Timestamp of the scan (epoch time).
     TString asicId;                     ///< ASIC identifier string (e.g., "XA-000-...").
@@ -142,9 +142,9 @@ public:
 
     /**
      * @brief Retrieves the discriminator list positions.
-     * @return A reference to the TArrayI containing the positions.
+     * @return A reference to the vector containing the positions.
      */
-    const TArrayI& getReadDiscList() const;
+    const std::vector<int>& getReadDiscList() const;
 
     /**
      * @brief Retrieves the read time as epoch time.

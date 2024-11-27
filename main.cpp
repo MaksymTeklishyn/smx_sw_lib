@@ -14,11 +14,11 @@ int main(int argc, char* argv[]) {
 
     pscan->readAsciiFile(filename)->Print();
     pscan->writeRootFile();
-    smxScurveFit* scurveFit = new smxScurveFit(pscan->toRooDataSet(32, 30));
+    smxScurveFit* scurveFit = new smxScurveFit(pscan->toRooDataSet(102, 30));
     scurveFit->fitErrFunction();
     scurveFit->drawPlot();
-    smxAsic asic;       
-    asic.addPscan(pscan);
+//  smxAsic asic;       
+//  asic.addPscan(pscan);
                         
                         
     return 0;           

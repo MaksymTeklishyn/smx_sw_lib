@@ -34,6 +34,10 @@ void smxScurveFit::initializeVariables() {
     if (!pulseAmp) {
         pulseAmp = new RooRealVar("pulseAmp", "Pulse Amplitude", -10, 300);
     }
+    countN = (RooRealVar*)data->get()->find("countN");
+    if (!countN) {
+        RooRealVar countN("countN", "Comparator counts", 0, 300); // Range of counts
+    }
 
     amplitude = new RooRealVar("amplitude", "Amplitude", 100.0, 0.0, 300.0);
     threshold = new RooRealVar("threshold", "Threshold", 60.0, -10.0, 300.0);
@@ -54,13 +58,13 @@ double smxScurveFit::fitErrFunction() {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
-
+/*
     RooRealVar* countN = (RooRealVar*)data->get()->find("countN");
     if (!countN) {
         std::cerr << "Error: Variable 'countN' not found in the dataset." << std::endl;
         return -1.0;
     }
-
+*/
     // Perform the chi-square fit
     RooFitResult* result = fitModel->chi2FitTo(*data, RooFit::YVar(*countN), RooFit::Save());
 
@@ -84,7 +88,7 @@ TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
     // Create a frame for the pulse amplitude
     RooPlot* frame = pulseAmp->frame(RooFit::Title(" "));
 
-    RooRealVar* countN = (RooRealVar*)data->get()->find("countN");
+//  RooRealVar* countN = (RooRealVar*)data->get()->find("countN");
     // Plot the dataset on the frame
     data->plotOnXY(frame, RooFit::YVar(*countN), RooFit::DrawOption("PZ"), RooFit::MarkerStyle(7));
     fitModel->plotOn(frame, RooFit::LineWidth(1));
