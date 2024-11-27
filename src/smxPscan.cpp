@@ -309,49 +309,6 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     return dataset;
 }
 
-
-void smxPscan::plotRooDataSet(int channel, int comparator, const std::string& outputFilename) {
-    // Generate the RooDataSet for the specified channel and comparator
-    RooDataSet* dataset = toRooDataSet(channel, comparator);
-    if (!dataset) {
-        std::cerr << "Error: Failed to create RooDataSet." << std::endl;
-        return;
-    }
-
-    // Retrieve the RooRealVars for pulse amplitude and count
-    RooRealVar* pulseAmp = (RooRealVar*)dataset->get()->find("pulseAmp");
-    RooRealVar* countN = (RooRealVar*)dataset->get()->find("countN");
-
-    if (!pulseAmp || !countN) {
-        std::cerr << "Error: Variables 'pulseAmp' or 'countN' not found in the dataset." << std::endl;
-        delete dataset; // Clean up
-        return;
-    }
-
-    // Create a frame for the x-axis variable (pulseAmp)
-    RooPlot* frame = pulseAmp->frame(RooFit::Title("Pulse Amplitude vs Count"));
-
-    // Plot the dataset on the frame with small dots and line connection
-    dataset->plotOnXY(frame, RooFit::YVar(*countN), RooFit::MarkerStyle(kFullDotSmall), RooFit::LineStyle(kSolid));
-
-    // Label the axes
-    frame->GetXaxis()->SetTitle("Pulse Amplitude");
-    frame->GetYaxis()->SetTitle("Count (Comparator)");
-
-    // Create a TCanvas and draw the frame
-    TCanvas canvas("canvas", "Pulse Amplitude vs Count", 1000, 500);
-    frame->Draw();
-
-    // Save the plot to the specified file
-    canvas.SaveAs(outputFilename.c_str());
-
-    std::cout << "Plot saved as: " << outputFilename << std::endl;
-
-    // Clean up
-    delete dataset;
-}
-
-
 void smxPscan::showTreeEntries() const {
     // Step 1: Check if required branches exist
     if (!pscanTree->GetBranch("pulse") || !pscanTree->GetBranch("channel") ||

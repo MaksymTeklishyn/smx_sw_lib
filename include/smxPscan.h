@@ -102,14 +102,6 @@ public:
     RooDataSet* toRooDataSet(int channelN, int comparator) const;
 
     /**
-     * @brief Plots data from a RooDataSet and saves it as a PDF.
-     * @param channel The channel number to plot.
-     * @param comparator The comparator index.
-     * @param outputFilename The name of the output PDF file.
-     */
-    void plotRooDataSet(int channel = 30, int comparator = 30, const std::string& outputFilename = "testDataSet.pdf");
-
-    /**
      * @brief Reads an ASCII file and populates the internal TTree.
      * @param filename The path to the ASCII file.
      * @return A pointer to the populated TTree.
