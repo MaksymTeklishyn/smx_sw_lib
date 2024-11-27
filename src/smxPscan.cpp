@@ -258,7 +258,7 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     }
 
     // Step 1: Define RooRealVars for pulse amplitude (x-axis), count number (y-axis), and error
-    RooRealVar pulseAmp("pulseAmp", "Pulse amplitude", 0-0, 255+1); // Range of pulse amplitudes
+    RooRealVar pulseAmp("pulseAmp", "Pulse amplitude", 0-0, 255+1, "a.u."); // Range of pulse amplitudes
     RooRealVar countN("countN", "Comparator counts", 0, 300); // Range of counts
     RooRealVar countNorm("countNorm", "Normalized comparator counts", 0, 3); // Range of counts
     RooArgSet variables(pulseAmp, countN, countNorm); // Group the variables into an ArgSet
@@ -283,7 +283,7 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     pscanTree->SetBranchAddress("channel", &channel);
     pscanTree->SetBranchAddress("ADC", adc);
     pscanTree->SetBranchAddress("tcomp", &tcomp);
-
+    float norm = 1./nPulses;
     std::cout << "Branch addresses set. Looping through TTree entries..." << std::endl;
 
     // Step 5: Loop over TTree entries and filter for the specified channel and comparator
@@ -297,8 +297,8 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
             countN.setVal(adc[comparator]);  
             applyWillsonErrors(&countN);
 
-            countNorm.setVal(adc[comparator]/nPulses); 
-            countNorm.setAsymError(countN.getAsymErrorLo()/nPulses, countN.getAsymErrorHi()/nPulses);
+            countNorm.setVal((countN.getVal()) * norm); 
+            countNorm.setAsymError((countN.getAsymErrorLo()) * norm, (countN.getAsymErrorHi()) * norm);
 
             dataset->add(variables);        
         }
