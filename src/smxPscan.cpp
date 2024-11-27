@@ -9,6 +9,7 @@
 #include <RooDataSet.h>
 #include <RooArgSet.h>
 #include <RooPlot.h>
+#include <RooCategory.h>
 #include <iostream>
 #include <sstream>
 #include <regex>
@@ -250,22 +251,28 @@ TString smxPscan::getAsicId() const {
     return asicId;
 }
 
-RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
-    // Check if the comparator index is valid
-    if (comparator < 0 || comparator >= smxNAdc) {
-        std::cerr << "Error: Comparator index out of range: " << comparator << std::endl;
-        return nullptr;
+#include <RooCategory.h> // Add this include for RooCategory
+
+RooDataSet* smxPscan::toRooDataSet(int channelN) const {
+    // Step 1: Define RooRealVars for pulse amplitude, count number, normalized count, and RooCategory for adcComp
+    RooRealVar pulseAmp("pulseAmp", "Pulse amplitude", 0, 256, "a.u."); // Range of pulse amplitudes
+    RooRealVar countN("countN", "Comparator counts", 0, 300);           // Range of counts
+    RooRealVar countNorm("countNorm", "Normalized comparator counts", -33, 33); // Normalized counts
+    RooCategory adcComp("adcComp", "ADC Comparator");
+
+    // Define adcComp categories for the comparators in readDiscList
+    for (size_t i = 0; i < readDiscList.size(); ++i) {
+        int compIndex = readDiscList.at(i);
+        adcComp.defineType(Form("Comp%d", compIndex), compIndex);
     }
 
-    // Step 1: Define RooRealVars for pulse amplitude (x-axis), count number (y-axis), and error
-    RooRealVar pulseAmp("pulseAmp", "Pulse amplitude", 0-0, 255+1, "a.u."); // Range of pulse amplitudes
-    RooRealVar countN("countN", "Comparator counts", 0, 300); // Range of counts
-    RooRealVar countNorm("countNorm", "Normalized comparator counts", 0, 3); // Range of counts
-    RooArgSet variables(pulseAmp, countN, countNorm); // Group the variables into an ArgSet
+    // Combine variables into an ArgSet
+    RooArgSet variables(pulseAmp, countN, countNorm, adcComp);
 
     // Step 2: Create a new RooDataSet
-    std::cout << "Creating RooDataSet for channel: " << channelN << " and comparator: " << comparator << std::endl;
-    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs TComp Data with Errors", variables, RooFit::StoreAsymError(variables));
+    std::cout << "Creating RooDataSet for channel: " << channelN << " and specified comparators in readDiscList." << std::endl;
+
+    RooDataSet* dataset = new RooDataSet("pscanData", "Pulse vs Comparator Data", variables, RooFit::StoreAsymError(variables));
 
     // Step 3: Check for required branches
     if (!pscanTree->GetBranch("pulse") || !pscanTree->GetBranch("channel") ||
@@ -283,31 +290,43 @@ RooDataSet* smxPscan::toRooDataSet(int channelN, int comparator) const {
     pscanTree->SetBranchAddress("channel", &channel);
     pscanTree->SetBranchAddress("ADC", adc);
     pscanTree->SetBranchAddress("tcomp", &tcomp);
-    float norm = 1./nPulses;
+
+    float norm = 1.0 / nPulses;
+
     std::cout << "Branch addresses set. Looping through TTree entries..." << std::endl;
 
-    // Step 5: Loop over TTree entries and filter for the specified channel and comparator
+    float visSepar = 0.02; // Hardcoded control variable
+
+    // Step 5: Loop over TTree entries and filter for the specified channel
     for (Long64_t i = 0; i < pscanTree->GetEntries(); ++i) {
         pscanTree->GetEntry(i);
 
         // Filter for the specified channel
         if (channel == channelN) {
-            pulseAmp.setVal(pulse);          
+            pulseAmp.setVal(pulse);
 
-            countN.setVal(adc[comparator]);  
-            applyWillsonErrors(&countN);
+            // Loop over comparators specified in readDiscList
+            for (size_t j = 0; j < readDiscList.size(); ++j) {
+                int compIndex = readDiscList.at(j);
+                if (compIndex == 31) continue; // time comp to be handled separately 
+                countN.setVal(adc[compIndex]);
+                applyWillsonErrors(&countN);
 
-            countNorm.setVal((countN.getVal()) * norm); 
-            countNorm.setAsymError((countN.getAsymErrorLo()) * norm, (countN.getAsymErrorHi()) * norm);
+                countNorm.setVal(countN.getVal() * norm - visSepar * (smxNAdc - 1 - compIndex));
+                countNorm.setAsymError(countN.getAsymErrorLo() * norm, countN.getAsymErrorHi() * norm);
 
-            dataset->add(variables);        
+                adcComp.setIndex(compIndex); // Set the adcComp value
+                dataset->add(variables);
+            }
         }
     }
 
     std::cout << "Finished creating RooDataSet. Total entries: " << dataset->numEntries() << std::endl;
 
+
     return dataset;
 }
+
 
 void smxPscan::showTreeEntries() const {
     // Step 1: Check if required branches exist

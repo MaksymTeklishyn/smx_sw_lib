@@ -33,8 +33,9 @@ void smxScurveFit::initializeVariables() {
     pulseAmp = (RooRealVar*)data->get()->find("pulseAmp");
     countN = (RooRealVar*)data->get()->find("countN");
     countNorm = (RooRealVar*)data->get()->find("countNorm");
+    adcComp = (RooCategory*)data->get()->find("adcComp");
 
-    offset = new RooRealVar("offset", "Offset", 0.0, 0.0, 3.0);
+    offset = new RooRealVar("offset", "Offset", .0, -2., 2.0);
     threshold = new RooRealVar("threshold", "Threshold", 60.0, -10.0, 300.0);
     sigma = new RooRealVar("sigma", "Sigma", 3.0, 0.1, 100.0);
 }
@@ -53,7 +54,9 @@ double smxScurveFit::fitErrFunction() {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
-    RooFitResult* result = fitModel->chi2FitTo(*data, RooFit::YVar(*countNorm), RooFit::Save());
+
+    RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce("adcComp==16"));
+    RooFitResult* result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save());
 
     if (result) {
         fitResult = result;
@@ -73,13 +76,15 @@ TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
     }
 
     RooPlot* frame = pulseAmp->frame(RooFit::Title(" "));
-    data->plotOnXY(frame, RooFit::YVar(*countNorm), RooFit::DrawOption("PZ"), RooFit::MarkerStyle(7));
+    RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce("1"));
+    dataReduced->plotOnXY(frame, RooFit::YVar(*countNorm), RooFit::DrawOption("PZ"), RooFit::MarkerStyle(7));
     fitModel->plotOn(frame, RooFit::LineWidth(1));
 
     // Customize axes
 //  frame->GetXaxis()->SetTitle("Pulse Amplitude, a.u.");
     frame->GetXaxis()->SetNdivisions(16, false);
-    frame->GetYaxis()->SetTitle("Count");
+    frame->GetYaxis()->SetTitle("Normalized counts");
+    frame->GetYaxis()->SetNdivisions(2);
 
     // Create a canvas and draw the frame
     TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 400);

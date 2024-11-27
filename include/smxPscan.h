@@ -99,7 +99,7 @@ public:
      * @param comparator The comparator index.
      * @return A pointer to the generated RooDataSet.
      */
-    RooDataSet* toRooDataSet(int channelN, int comparator) const;
+    RooDataSet* toRooDataSet(int channelN) const;
 
     /**
      * @brief Reads an ASCII file and populates the internal TTree.

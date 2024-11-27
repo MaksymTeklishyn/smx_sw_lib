@@ -22,6 +22,7 @@ private:
     RooRealVar* pulseAmp;       ///< Pointer to the pulse amplitude variable.
     RooRealVar* countN;   
     RooRealVar* countNorm;   
+    RooCategory* adcComp;
     RooRealVar* offset;      ///< Pointer to the amplitude parameter.
     RooRealVar* threshold;      ///< Pointer to the threshold parameter.
     RooRealVar* sigma;          ///< Pointer to the sigma parameter.
