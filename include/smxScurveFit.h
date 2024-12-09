@@ -3,11 +3,13 @@
 
 #include <RooDataSet.h>
 #include <RooRealVar.h>
+#include <RooCategory.h>
 #include <RooFormulaVar.h>
 #include <RooFitResult.h>
 #include <TString.h>
 #include <TCanvas.h>
 #include <iostream>
+#include <vector>
 
 /**
  * @class smxScurveFit
@@ -18,6 +20,7 @@ private:
     RooDataSet* data;           ///< Pointer to the RooDataSet for fitting.
     int channel;                ///< Channel number, -1 if unknown.
     int comparator;             ///< Comparator number, -1 if unknown.
+    std::vector<int> readDiscList;  ///< Positions of discriminators
 
     RooRealVar* pulseAmp;       ///< Pointer to the pulse amplitude variable.
     RooRealVar* countN;   

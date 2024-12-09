@@ -7,12 +7,22 @@
 #include <TCanvas.h>
 #include <TMath.h>
 #include <TAxis.h>
+#include "TROOT.h" // Include general ROOT functionality
 #include <iostream>
 
 smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
-    : data(dataset), channel(ch), comparator(comp),
-      pulseAmp(nullptr), countN(nullptr), countNorm(nullptr), offset(nullptr), threshold(nullptr), sigma(nullptr),
-      fitModel(nullptr), fitResult(nullptr) {
+    : data(dataset),
+      channel(ch),
+      comparator(comp),
+      readDiscList(), // Explicitly initialize as an empty vector
+      pulseAmp(nullptr),
+      countN(nullptr),
+      countNorm(nullptr),
+      offset(nullptr),
+      threshold(nullptr),
+      sigma(nullptr),
+      fitModel(nullptr),
+      fitResult(nullptr) {
     if (!data) {
         std::cerr << "Error: Null dataset passed to smxScurveFit constructor!" << std::endl;
         return;
@@ -22,6 +32,7 @@ smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
     initializeVariables();
     setupFitModel();
 }
+
 
 smxScurveFit::~smxScurveFit() {
     delete fitModel;
@@ -33,8 +44,16 @@ void smxScurveFit::initializeVariables() {
     pulseAmp = (RooRealVar*)data->get()->find("pulseAmp");
     countN = (RooRealVar*)data->get()->find("countN");
     countNorm = (RooRealVar*)data->get()->find("countNorm");
-    adcComp = (RooCategory*)data->get()->find("adcComp");
 
+    adcComp = (RooCategory*)data->get()->find("adcComp");
+    readDiscList.clear();
+    // Access the map of state names to integer values
+    const std::map<std::string, int>& stateMap = adcComp->states();
+    // Extract the integer values and store them in the vector
+    for (const auto& [name, value] : stateMap) {
+        readDiscList.push_back(value);
+    }
+  
     offset = new RooRealVar("offset", "Offset", -.28 -1., .5);
     threshold = new RooRealVar("threshold", "Threshold", 60.0, -1.0, 256.0);
     sigma = new RooRealVar("sigma", "Sigma", 3.0, 0.5, 20.0);
@@ -54,9 +73,14 @@ double smxScurveFit::fitErrFunction() {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
+    // Enable multithreading
+//  ROOT::EnableImplicitMT(4); // Use 4 threads
 
     RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce("adcComp==16"));
-    RooFitResult* result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save(), RooFit::Strategy(2));
+    RooFitResult* result;
+    do {
+    result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save(), RooFit::Strategy(0), RooFit::PrintLevel(-1));
+    } while ((result->status()) > 1);
 
     if (result) {
         fitResult = result;
