@@ -257,13 +257,14 @@ RooDataSet* smxPscan::toRooDataSet(int channelN) const {
     // Step 1: Define RooRealVars for pulse amplitude, count number, normalized count, and RooCategory for adcComp
     RooRealVar pulseAmp("pulseAmp", "Pulse amplitude", 0, 256, "a.u."); // Range of pulse amplitudes
     RooRealVar countN("countN", "Comparator counts", 0, 300);           // Range of counts
-    RooRealVar countNorm("countNorm", "Normalized comparator counts", -33, 33); // Normalized counts
+    RooRealVar countNorm("countNorm", "Normalized comparator counts", -2, 3); // Normalized counts
     RooCategory adcComp("adcComp", "ADC Comparator");
 
     // Define adcComp categories for the comparators in readDiscList
     for (size_t i = 0; i < readDiscList.size(); ++i) {
         int compIndex = readDiscList.at(i);
-        adcComp.defineType(Form("Comp%d", compIndex), compIndex);
+        adcComp.defineType(Form("Comp%02d", compIndex), compIndex);
+        std::cout << compIndex << std::endl;
     }
 
     // Combine variables into an ArgSet

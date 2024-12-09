@@ -17,7 +17,8 @@ int main(int argc, char* argv[]) {
     smxScurveFit* scurveFit;
     TCanvas* canvA = new TCanvas("canvA", "S-Curve Fit", 1000, 400);
     canvA->Print("test.pdf[");
-    for (int i=0; i<smxNCh; ++i) {
+//  for (int i=0; i<smxNCh; ++i) {
+    for (int i=0; i<10; ++i) {
         scurveFit = new smxScurveFit(pscan->toRooDataSet(i));
         scurveFit->fitErrFunction();
         scurveFit->drawPlot()->Print("test.pdf");

@@ -54,9 +54,9 @@ void smxScurveFit::initializeVariables() {
         readDiscList.push_back(value);
     }
   
-    offset = new RooRealVar("offset", "Offset", -.28 -1., .5);
+    offset = new RooRealVar("offset", "Offset", 0, -1., .5);
     threshold = new RooRealVar("threshold", "Threshold", 60.0, -1.0, 256.0);
-    sigma = new RooRealVar("sigma", "Sigma", 3.0, 0.5, 20.0);
+    sigma = new RooRealVar("sigma", "Sigma", 3.0, 1.0, 15.0);
 }
 
 void smxScurveFit::setupFitModel() {
@@ -76,10 +76,14 @@ double smxScurveFit::fitErrFunction() {
     // Enable multithreading
 //  ROOT::EnableImplicitMT(4); // Use 4 threads
 
-    RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce("adcComp==16"));
+    int selectedDisc = readDiscList[4];
+    RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce(Form("adcComp==%d", selectedDisc)));
+//  dataReduced->get(0);
+//  offset->setVal(countNorm->getVal(dataReduced->get(1)));
+    offset->setVal(countNorm->getVal());
     RooFitResult* result;
     do {
-    result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save(), RooFit::Strategy(0), RooFit::PrintLevel(-1));
+    result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save(), RooFit::Strategy(1), RooFit::PrintLevel(-1));
     } while ((result->status()) > 1);
 
     if (result) {
