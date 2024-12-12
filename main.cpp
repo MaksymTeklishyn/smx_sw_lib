@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 //  for (int i=0; i<smxNCh; ++i) {
     for (int i=0; i<10; ++i) {
         scurveFit = new smxScurveFit(pscan->toRooDataSet(i));
-        scurveFit->fitErrFunction();
+        scurveFit->fitAllScurves();
         scurveFit->drawPlot()->Print("testDataSet.pdf");
         delete scurveFit;
     }

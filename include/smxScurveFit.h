@@ -33,7 +33,7 @@ private:
 
     RooFormulaVar* fitModel;    ///< Pointer to the error function model used for fitting.
 
-    RooFitResult* fitResult;    ///< Stores the results of the last performed fit.
+    RooDataSet* fitResults;     ///< Pointer to the resulted variables of the fits.
 
     /**
      * @brief Initialize all variables and the model for the error function fit.
@@ -65,7 +65,7 @@ public:
      * @brief Performs a chi-square fit using an error function model (erfc).
      * @return The chi-square value of the fit, or -1 on error.
      */
-    double fitErrFunction();
+    double fitAllScurves();
 
     /**
      * @brief Generates and returns a TCanvas with the S-curve fit plot.
@@ -88,10 +88,6 @@ public:
      */
     int getComparator() const;
 
-    /**
-     * @brief Print the fit results to the console.
-     */
-    void printFitResults() const;
 };
 
 #endif // SMX_SCURVE_FIT_H

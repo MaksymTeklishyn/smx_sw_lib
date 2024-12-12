@@ -1,6 +1,7 @@
 #include "smxScurveFit.h"
 #include "smxConstants.h"
 #include <RooPlot.h>
+#include <RooArgSet.h>
 #include <RooChi2Var.h>
 #include <RooMinimizer.h>
 #include <TGaxis.h>
@@ -22,7 +23,7 @@ smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
       threshold(nullptr),
       sigma(nullptr),
       fitModel(nullptr),
-      fitResult(nullptr) {
+      fitResults(nullptr) {
     if (!data) {
         std::cerr << "Error: Null dataset passed to smxScurveFit constructor!" << std::endl;
         return;
@@ -36,7 +37,7 @@ smxScurveFit::smxScurveFit(RooDataSet* dataset, int ch, int comp)
 
 smxScurveFit::~smxScurveFit() {
     delete fitModel;
-    delete fitResult;
+    delete fitResults;
 }
 
 void smxScurveFit::initializeVariables() {
@@ -73,11 +74,13 @@ void smxScurveFit::setupFitModel() {
     );
 }
 
-double smxScurveFit::fitErrFunction() {
+double smxScurveFit::fitAllScurves() {
     if (!data || !fitModel) {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
+    RooArgSet variables(*offset, *threshold, *sigma);
+    RooDataSet* fitResults = new RooDataSet("fitResults", "Fit results", variables, RooFit::StoreAsymError(variables));
 
     int maxRetries = 5; // Maximum number of retries
     int retryCount = 0;
@@ -109,10 +112,10 @@ double smxScurveFit::fitErrFunction() {
     } while ((result && result->status() > 1) && retryCount < maxRetries);
 
     if (result && result->status() <= 1) {
-        fitResult = result;
         std::cout << "Fit Results:" << std::endl;
-        fitResult->Print("v");
-        return fitResult->minNll();
+        result->Print("v");
+        fitResults->add(variables);
+        return result->minNll();
     } else {
         std::cerr << "Fit failed after " << retryCount << " retries!" << std::endl;
         delete result;
@@ -161,12 +164,4 @@ int smxScurveFit::getComparator() const {
     return comparator;
 }
 
-void smxScurveFit::printFitResults() const {
-    if (!fitResult) {
-        std::cerr << "Error: No fit results available to print!" << std::endl;
-        return;
-    }
-
-    fitResult->Print("v");
-}
 

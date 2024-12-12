@@ -251,7 +251,6 @@ TString smxPscan::getAsicId() const {
     return asicId;
 }
 
-#include <RooCategory.h> // Add this include for RooCategory
 
 RooDataSet* smxPscan::toRooDataSet(int channelN) const {
     // Step 1: Define RooRealVars for pulse amplitude, count number, normalized count, and RooCategory for adcComp
