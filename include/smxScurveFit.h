@@ -26,7 +26,8 @@ private:
     RooRealVar* countN;   
     RooRealVar* countNorm;   
     RooCategory* adcComp;
-    RooRealVar* offset;      ///< Pointer to the amplitude parameter.
+ 
+    RooRealVar* offset;         ///< Pointer to the amplitude parameter.
     RooRealVar* threshold;      ///< Pointer to the threshold parameter.
     RooRealVar* sigma;          ///< Pointer to the sigma parameter.
 
@@ -72,7 +73,7 @@ public:
      * @param outputFilename Name of the output PDF file for the plot (default: "testDataSet.pdf").
      * @return Pointer to the TCanvas object containing the plot.
      */
-    TCanvas* drawPlot(const TString& outputFilename = "testDataSet.pdf") const;
+    TCanvas* drawPlot() const;
 
     // Getters
     /**

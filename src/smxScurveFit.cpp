@@ -40,20 +40,25 @@ smxScurveFit::~smxScurveFit() {
 }
 
 void smxScurveFit::initializeVariables() {
-    // Retrieve variables from the dataset, or create them if they don't exist
-    pulseAmp = (RooRealVar*)data->get()->find("pulseAmp");
-    countN = (RooRealVar*)data->get()->find("countN");
-    countNorm = (RooRealVar*)data->get()->find("countNorm");
+    // Retrieve variables from the dataset
+    pulseAmp = dynamic_cast<RooRealVar*>(data->get()->find("pulseAmp"));
+    countN = dynamic_cast<RooRealVar*>(data->get()->find("countN"));
+    countNorm = dynamic_cast<RooRealVar*>(data->get()->find("countNorm"));
+    adcComp = dynamic_cast<RooCategory*>(data->get()->find("adcComp"));
 
-    adcComp = (RooCategory*)data->get()->find("adcComp");
+    if (!pulseAmp || !countN || !countNorm || !adcComp) {
+        std::cerr << "Error: Required variables not found in dataset!" << std::endl;
+        return;
+    }
+
+    // Populate readDiscList from adcComp states
     readDiscList.clear();
-    // Access the map of state names to integer values
-    const std::map<std::string, int>& stateMap = adcComp->states();
-    // Extract the integer values and store them in the vector
+    const auto& stateMap = adcComp->states();
     for (const auto& [name, value] : stateMap) {
         readDiscList.push_back(value);
     }
-  
+
+    // Initialize fit parameters
     offset = new RooRealVar("offset", "Offset", 0, -1., .5);
     threshold = new RooRealVar("threshold", "Threshold", 60.0, -1.0, 256.0);
     sigma = new RooRealVar("sigma", "Sigma", 3.0, 1.0, 15.0);
@@ -63,8 +68,8 @@ void smxScurveFit::setupFitModel() {
     // Create the error function model
     fitModel = new RooFormulaVar(
         "fitModel",
-        "@0 + 0.5 * TMath::Erfc((@2 - @1) / (TMath::Sqrt(2) * @3))",
-        RooArgList(*offset, *pulseAmp, *threshold, *sigma)
+        "offset + 0.5 * TMath::Erfc((threshold - pulseAmp) / (TMath::Sqrt(2) * sigma))",
+        RooArgList(*pulseAmp, *offset, *threshold, *sigma)
     );
 }
 
@@ -73,31 +78,49 @@ double smxScurveFit::fitErrFunction() {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
-    // Enable multithreading
-//  ROOT::EnableImplicitMT(4); // Use 4 threads
 
-    int selectedDisc = readDiscList[4];
+    int maxRetries = 5; // Maximum number of retries
+    int retryCount = 0;
+
+    int selectedDisc = readDiscList[2]; // Select a specific comparator
     RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce(Form("adcComp==%d", selectedDisc)));
-//  dataReduced->get(0);
-//  offset->setVal(countNorm->getVal(dataReduced->get(1)));
-    offset->setVal(countNorm->getVal());
-    RooFitResult* result;
-    do {
-    result = fitModel->chi2FitTo(*dataReduced, RooFit::YVar(*countNorm), RooFit::Save(), RooFit::Strategy(1), RooFit::PrintLevel(-1));
-    } while ((result->status()) > 1);
 
-    if (result) {
+    if (!dataReduced) {
+        std::cerr << "Error: Failed to reduce dataset!" << std::endl;
+        return -1.0;
+    }
+
+    offset->setVal(countNorm->getVal());
+
+    RooFitResult* result = nullptr;
+    do {
+        int strategy = (retryCount == 0) ? 0 : (retryCount == 1) ? 1 : 2; // Strategy adjustment
+        std::cout << "Retry #" << retryCount << " with strategy " << strategy << "..." << std::endl;
+
+        result = fitModel->chi2FitTo(
+            *dataReduced,
+            RooFit::YVar(*countNorm),
+            RooFit::Save(),
+            RooFit::Strategy(strategy),
+            RooFit::PrintLevel(-1)
+        );
+
+        retryCount++;
+    } while ((result && result->status() > 1) && retryCount < maxRetries);
+
+    if (result && result->status() <= 1) {
         fitResult = result;
         std::cout << "Fit Results:" << std::endl;
         fitResult->Print("v");
         return fitResult->minNll();
     } else {
-        std::cerr << "Fit failed!" << std::endl;
+        std::cerr << "Fit failed after " << retryCount << " retries!" << std::endl;
+        delete result;
         return -1.0;
     }
 }
 
-TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
+TCanvas* smxScurveFit::drawPlot() const {
     if (!data) {
         std::cerr << "Error: No RooDataSet available for plotting." << std::endl;
         return nullptr;
@@ -126,9 +149,6 @@ TCanvas* smxScurveFit::drawPlot(const TString& outputFilename) const {
     secondaryAxis->SetLabelFont(42);     // Standard ROOT font
     secondaryAxis->SetTitleFont(42);
     secondaryAxis->Draw();
-
-    // Save the plot to the specified file
-//  canvas->SaveAs(outputFilename);
 
     return canvas;
 }
