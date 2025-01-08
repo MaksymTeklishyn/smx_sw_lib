@@ -62,10 +62,10 @@ public:
     ~smxScurveFit();
 
     /**
-     * @brief Performs a chi-square fit using an error function model (erfc).
+     * @brief Performs a sequential fit of all s-curves using an error function model (erfc).
      * @return The chi-square value of the fit, or -1 on error.
      */
-    double fitAllScurves();
+    double fitScurvesSeq();
 
     /**
      * @brief Generates and returns a TCanvas with the S-curve fit plot.

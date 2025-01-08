@@ -62,7 +62,7 @@ void smxScurveFit::initializeVariables() {
     // Initialize fit parameters
     offset = new RooRealVar("offset", "Offset", 0, -1., .5);
     threshold = new RooRealVar("threshold", "Threshold", 60.0, -1.0, 256.0);
-    sigma = new RooRealVar("sigma", "Sigma", 3.0, 1.0, 15.0);
+    sigma = new RooRealVar("sigma", "Sigma", 1.0, .1, 15.0);
 }
 
 void smxScurveFit::setupFitModel() {
@@ -74,13 +74,13 @@ void smxScurveFit::setupFitModel() {
     );
 }
 
-double smxScurveFit::fitAllScurves() {
+double smxScurveFit::fitScurvesSeq() {
     if (!data || !fitModel) {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
 
-    RooArgSet variables(*offset, *threshold, *sigma);
+    RooArgSet variables(*offset, *threshold, *sigma, *adcComp);
     RooDataSet* fitResults = new RooDataSet("fitResults", "Fit results", variables, RooFit::StoreAsymError(variables));
     double totalChi2 = 0.0; // To accumulate chi2 values across all comparators
     int maxRetries = 5;

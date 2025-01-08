@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     for (int i=0; i<16; ++i) {
 //  for (int i=0; i<smxNCh; ++i) {
         scurveFit = new smxScurveFit(pscan->toRooDataSet(i));
-        scurveFit->fitAllScurves();
+        scurveFit->fitScurvesSeq();
         scurveFit->drawPlot()->Print("testDataSet.pdf");
         delete scurveFit;
     }
