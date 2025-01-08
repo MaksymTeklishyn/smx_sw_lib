@@ -12,7 +12,7 @@ OBJ           := $(SRC:.cpp=.o)
 
 # Compiler and flags
 CXX           := g++
-CXXFLAGS      := -I$(INCDIR) $(ROOTCFLAGS) -pthread -std=c++17 -Wall -Wextra -g
+CXXFLAGS      := -I$(INCDIR) $(ROOTCFLAGS) -pthread -std=c++20 -Wall -Wextra -g
 LDFLAGS       := $(ROOTLIBS) $(ROOTGLIBS)
 
 # Targets

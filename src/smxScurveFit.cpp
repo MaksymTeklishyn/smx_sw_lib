@@ -2,12 +2,12 @@
 #include "smxConstants.h"
 #include <RooPlot.h>
 #include <RooArgSet.h>
-#include <RooChi2Var.h>
 #include <RooMinimizer.h>
 #include <TGaxis.h>
 #include <TCanvas.h>
 #include <TMath.h>
 #include <TAxis.h>
+#include <TPaveText.h>
 #include "TROOT.h" // Include general ROOT functionality
 #include <iostream>
 
@@ -79,54 +79,73 @@ double smxScurveFit::fitAllScurves() {
         std::cerr << "Error: Dataset or model not initialized for fitting!" << std::endl;
         return -1.0;
     }
+
     RooArgSet variables(*offset, *threshold, *sigma);
     RooDataSet* fitResults = new RooDataSet("fitResults", "Fit results", variables, RooFit::StoreAsymError(variables));
+    double totalChi2 = 0.0; // To accumulate chi2 values across all comparators
+    int maxRetries = 5;
 
-    int maxRetries = 5; // Maximum number of retries
-    int retryCount = 0;
+    for (int selectedDisc : readDiscList) {
+        std::cout << "Fitting for comparator: " << selectedDisc << std::endl;
 
-    int selectedDisc = readDiscList[2]; // Select a specific comparator
-    RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce(Form("adcComp==%d", selectedDisc)));
+        RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce(Form("adcComp==%d", selectedDisc)));
+        if (!dataReduced) {
+            std::cerr << "Error: Failed to reduce dataset for comparator " << selectedDisc << "!" << std::endl;
+            continue;
+        }
 
-    if (!dataReduced) {
-        std::cerr << "Error: Failed to reduce dataset!" << std::endl;
-        return -1.0;
+        RooFitResult* result = nullptr;
+        int retryCount = 0;
+
+        do {
+            int strategy = (retryCount == 0) ? 0 : (retryCount == 1) ? 1 : 2; // Strategy adjustment
+            std::cout << "Retry #" << retryCount << " with strategy " << strategy << "..." << std::endl;
+
+            result = fitModel->chi2FitTo(
+                *dataReduced,
+                RooFit::YVar(*countNorm),
+                RooFit::Save(),
+                RooFit::Strategy(strategy),
+                RooFit::PrintLevel(-1)
+            );
+
+            retryCount++;
+        } while ((result && result->status() > 1) && retryCount < maxRetries);
+
+        if (result && result->status() <= 1) {
+            std::cout << "Fit Results for comparator " << selectedDisc << ":" << std::endl;
+            result->Print("v");
+            fitResults->add(variables);
+            totalChi2 += result->minNll(); // Accumulate chi2
+            delete result; // Clean up after each fit
+        } else {
+            std::cerr << "Fit failed for comparator " << selectedDisc << " after " << retryCount << " retries!" << std::endl;
+            delete result;
+        }
+
+        delete dataReduced; // Clean up reduced dataset
     }
 
-    offset->setVal(countNorm->getVal());
-
-    RooFitResult* result = nullptr;
-    do {
-        int strategy = (retryCount == 0) ? 0 : (retryCount == 1) ? 1 : 2; // Strategy adjustment
-        std::cout << "Retry #" << retryCount << " with strategy " << strategy << "..." << std::endl;
-
-        result = fitModel->chi2FitTo(
-            *dataReduced,
-            RooFit::YVar(*countNorm),
-            RooFit::Save(),
-            RooFit::Strategy(strategy),
-            RooFit::PrintLevel(-1)
-        );
-
-        retryCount++;
-    } while ((result && result->status() > 1) && retryCount < maxRetries);
-
-    if (result && result->status() <= 1) {
-        std::cout << "Fit Results:" << std::endl;
-        result->Print("v");
-        fitResults->add(variables);
-        return result->minNll();
-    } else {
-        std::cerr << "Fit failed after " << retryCount << " retries!" << std::endl;
-        delete result;
-        return -1.0;
-    }
+    std::cout << "Total Chi2: " << totalChi2 << std::endl;
+    return totalChi2;
 }
 
 TCanvas* smxScurveFit::drawPlot() const {
-    if (!data) {
-        std::cerr << "Error: No RooDataSet available for plotting." << std::endl;
-        return nullptr;
+    TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 400);
+
+    if (!data || !pulseAmp || !countNorm || !fitModel) {
+        std::cerr << "Error: Missing dataset, variables, or model for plotting." << std::endl;
+
+        // Draw a dummy frame to indicate an error
+        canvas->cd();
+        canvas->SetFillColor(kWhite);
+        TPaveText* errorText = new TPaveText(0.1, 0.4, 0.9, 0.6, "NDC");
+        errorText->AddText("Error: Unable to generate plot.");
+        errorText->SetFillColor(kRed - 10);
+        errorText->SetTextColor(kBlack);
+        errorText->SetTextFont(42);
+        errorText->Draw();
+        return canvas;
     }
 
     RooPlot* frame = pulseAmp->frame(RooFit::Title(" "));
@@ -139,9 +158,6 @@ TCanvas* smxScurveFit::drawPlot() const {
     frame->GetXaxis()->SetNdivisions(16, false);
     frame->GetYaxis()->SetTitle("Normalized counts");
     frame->GetYaxis()->SetNdivisions(2);
-
-    // Create a canvas and draw the frame
-    TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 400);
     frame->Draw();
 
     // Draw the secondary axis
@@ -155,6 +171,7 @@ TCanvas* smxScurveFit::drawPlot() const {
 
     return canvas;
 }
+
 
 int smxScurveFit::getChannel() const {
     return channel;

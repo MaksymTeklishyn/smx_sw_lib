@@ -129,7 +129,7 @@ TTree* smxPscan::readAsciiFile(const std::string& filename) {
     asciiFile.open(filename);
     if (!asciiFile.is_open()) {
         logError("Failed to open file: " + filename);
-        return nullptr;
+        return pscanTree;
     }
     std::cout << "File opened successfully: " << filename << std::endl;
 
