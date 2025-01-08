@@ -8,6 +8,7 @@
 #include <TMath.h>
 #include <TAxis.h>
 #include <TPaveText.h>
+#include <TRandom3.h> 
 #include "TROOT.h" // Include general ROOT functionality
 #include <iostream>
 
@@ -65,6 +66,45 @@ void smxScurveFit::initializeVariables() {
     sigma = new RooRealVar("sigma", "Sigma", 1.0, .1, 15.0);
 }
 
+void smxScurveFit::randomizeInitialValues(double deviation) {
+    TRandom3 rng; // Random number generator
+    rng.SetSeed(0); // Use system time or a fixed value for reproducibility
+
+    // Ensure deviation is non-negative
+    if (deviation < 0) {
+        std::cerr << "Error: Deviation must be non-negative." << std::endl;
+        return;
+    }
+
+    // Generate random multipliers
+    double offsetFactor = rng.Uniform(1.0 - deviation, 1.0 + deviation);
+    double thresholdFactor = rng.Uniform(1.0 - deviation, 1.0 + deviation);
+    double sigmaFactor = rng.Uniform(1.0 - deviation, 1.0 + deviation);
+
+    // Calculate and clamp new values for offset
+    double newOffset = offset->getVal() * offsetFactor;
+    if (newOffset < offset->getMin()) newOffset = offset->getMin();
+    if (newOffset > offset->getMax()) newOffset = offset->getMax();
+    offset->setVal(newOffset);
+
+    // Calculate and clamp new values for threshold
+    double newThreshold = threshold->getVal() * thresholdFactor;
+    if (newThreshold < threshold->getMin()) newThreshold = threshold->getMin();
+    if (newThreshold > threshold->getMax()) newThreshold = threshold->getMax();
+    threshold->setVal(newThreshold);
+
+    // Calculate and clamp new values for sigma
+    double newSigma = sigma->getVal() * sigmaFactor;
+    if (newSigma < sigma->getMin()) newSigma = sigma->getMin();
+    if (newSigma > sigma->getMax()) newSigma = sigma->getMax();
+    sigma->setVal(newSigma);
+
+    std::cout << "Randomized initial values with deviation " << deviation << ":" << std::endl;
+    std::cout << "  Offset: " << offset->getVal() << " (clamped if necessary)" << std::endl;
+    std::cout << "  Threshold: " << threshold->getVal() << " (clamped if necessary)" << std::endl;
+    std::cout << "  Sigma: " << sigma->getVal() << " (clamped if necessary)" << std::endl;
+}
+
 void smxScurveFit::setupFitModel() {
     // Create the error function model
     fitModel = new RooFormulaVar(
@@ -83,7 +123,7 @@ double smxScurveFit::fitScurvesSeq() {
     RooArgSet variables(*offset, *threshold, *sigma, *adcComp);
     RooDataSet* fitResults = new RooDataSet("fitResults", "Fit results", variables, RooFit::StoreAsymError(variables));
     double totalChi2 = 0.0; // To accumulate chi2 values across all comparators
-    int maxRetries = 5;
+    int maxRetries = 3;
 
     for (int selectedDisc : readDiscList) {
         std::cout << "Fitting for comparator: " << selectedDisc << std::endl;
@@ -97,7 +137,9 @@ double smxScurveFit::fitScurvesSeq() {
         RooFitResult* result = nullptr;
         int retryCount = 0;
 
-        do {
+        while ((retryCount < maxRetries) && (!result || result->status() > 1)) {
+ //         randomizeInitialValues(); // Randomize the initial values before each retry
+
             int strategy = (retryCount == 0) ? 0 : (retryCount == 1) ? 1 : 2; // Strategy adjustment
             std::cout << "Retry #" << retryCount << " with strategy " << strategy << "..." << std::endl;
 
@@ -110,25 +152,29 @@ double smxScurveFit::fitScurvesSeq() {
             );
 
             retryCount++;
-        } while ((result && result->status() > 1) && retryCount < maxRetries);
+        }
 
         if (result && result->status() <= 1) {
             std::cout << "Fit Results for comparator " << selectedDisc << ":" << std::endl;
             result->Print("v");
             fitResults->add(variables);
             totalChi2 += result->minNll(); // Accumulate chi2
-            delete result; // Clean up after each fit
         } else {
             std::cerr << "Fit failed for comparator " << selectedDisc << " after " << retryCount << " retries!" << std::endl;
-            delete result;
         }
 
-        delete dataReduced; // Clean up reduced dataset
+        // Clean up result and reduced dataset
+        if (result) {
+            delete result;
+        }
+        delete dataReduced;
     }
 
     std::cout << "Total Chi2: " << totalChi2 << std::endl;
+    delete fitResults; // Clean up fit results dataset to avoid memory leaks
     return totalChi2;
 }
+
 
 TCanvas* smxScurveFit::drawPlot() const {
     TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 400);

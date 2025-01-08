@@ -42,6 +42,12 @@ private:
     void initializeVariables();
 
     /**
+     * @brief Randomizes the initial values of fitting parameters by multiplying with a random factor.
+     * @param deviation The maximum deviation from 1 (default is 0.1).
+     */
+    void randomizeInitialValues(double deviation = 0.1);
+
+    /**
      * @brief Initialize the error function model.
      * @details Sets up the `fitModel` using `RooFormulaVar` and the initialized variables.
      */
