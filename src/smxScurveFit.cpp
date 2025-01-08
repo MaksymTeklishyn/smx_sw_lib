@@ -98,11 +98,6 @@ void smxScurveFit::randomizeInitialValues(double deviation) {
     if (newSigma < sigma->getMin()) newSigma = sigma->getMin();
     if (newSigma > sigma->getMax()) newSigma = sigma->getMax();
     sigma->setVal(newSigma);
-
-    std::cout << "Randomized initial values with deviation " << deviation << ":" << std::endl;
-    std::cout << "  Offset: " << offset->getVal() << " (clamped if necessary)" << std::endl;
-    std::cout << "  Threshold: " << threshold->getVal() << " (clamped if necessary)" << std::endl;
-    std::cout << "  Sigma: " << sigma->getVal() << " (clamped if necessary)" << std::endl;
 }
 
 void smxScurveFit::setupFitModel() {
@@ -121,7 +116,7 @@ double smxScurveFit::fitScurvesSeq() {
     }
 
     RooArgSet variables(*offset, *threshold, *sigma, *adcComp);
-    RooDataSet* fitResults = new RooDataSet("fitResults", "Fit results", variables, RooFit::StoreAsymError(variables));
+    fitResults = new RooDataSet("fitResults", "Fit results", variables, RooFit::StoreAsymError(variables));
     double totalChi2 = 0.0; // To accumulate chi2 values across all comparators
     int maxRetries = 3;
 
@@ -138,7 +133,7 @@ double smxScurveFit::fitScurvesSeq() {
         int retryCount = 0;
 
         while ((retryCount < maxRetries) && (!result || result->status() > 1)) {
- //         randomizeInitialValues(); // Randomize the initial values before each retry
+            randomizeInitialValues(); // Randomize the initial values before each retry
 
             int strategy = (retryCount == 0) ? 0 : (retryCount == 1) ? 1 : 2; // Strategy adjustment
             std::cout << "Retry #" << retryCount << " with strategy " << strategy << "..." << std::endl;
@@ -171,7 +166,6 @@ double smxScurveFit::fitScurvesSeq() {
     }
 
     std::cout << "Total Chi2: " << totalChi2 << std::endl;
-    delete fitResults; // Clean up fit results dataset to avoid memory leaks
     return totalChi2;
 }
 
@@ -179,8 +173,8 @@ double smxScurveFit::fitScurvesSeq() {
 TCanvas* smxScurveFit::drawPlot() const {
     TCanvas* canvas = new TCanvas("canvas", "S-Curve Fit", 1000, 400);
 
-    if (!data || !pulseAmp || !countNorm || !fitModel) {
-        std::cerr << "Error: Missing dataset, variables, or model for plotting." << std::endl;
+    if (!data || !pulseAmp || !countNorm || !fitModel || !fitResults) {
+        std::cerr << "Error: Missing dataset, fit results, variables, or model for plotting." << std::endl;
 
         // Draw a dummy frame to indicate an error
         canvas->cd();
@@ -194,29 +188,50 @@ TCanvas* smxScurveFit::drawPlot() const {
         return canvas;
     }
 
-    RooPlot* frame = pulseAmp->frame(RooFit::Title(" "));
-    RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce("1"));
-    dataReduced->plotOnXY(frame, RooFit::YVar(*countNorm), RooFit::DrawOption("PZ"), RooFit::MarkerStyle(7));
-    fitModel->plotOn(frame, RooFit::LineWidth(1));
+    // Create a single plot frame for all discriminators
+    RooPlot* frame = pulseAmp->frame(RooFit::Title("S-Curve Fit for All Discriminators"));
 
-    // Customize axes
-//  frame->GetXaxis()->SetTitle("Pulse Amplitude, a.u.");
+    for (int selectedDisc : readDiscList) {
+ //     if (selectedDisc == 30) continue;
+        // Reduce dataset for the current discriminator
+        RooDataSet* dataReduced = dynamic_cast<RooDataSet*>(data->reduce(Form("adcComp==%d", selectedDisc)));
+        if (!dataReduced) {
+            std::cerr << "Error: Failed to reduce dataset for discriminator " << selectedDisc << "!" << std::endl;
+            continue;
+        }
+
+        // Retrieve fit parameters for the current discriminator
+        fitResults->get(selectedDisc); // Select the row corresponding to the discriminator
+        double offsetValue = offset->getVal();
+        double thresholdValue = threshold->getVal();
+        double sigmaValue = sigma->getVal();
+
+        // Update the fit model parameters
+        offset->setVal(offsetValue);
+        threshold->setVal(thresholdValue);
+        sigma->setVal(sigmaValue);
+
+        // Plot data points and fit curve for the current discriminator
+        dataReduced->plotOnXY(frame, RooFit::YVar(*countNorm), RooFit::DrawOption("PZ"), RooFit::MarkerStyle(7));
+        fitModel->plotOn(frame, RooFit::LineWidth(1)); // Use unique colors
+
+        delete dataReduced; // Clean up reduced dataset
+    }
+
+    // Customize and draw the frame
+    frame->GetXaxis()->SetTitle("Pulse Amplitude (a.u.)");
     frame->GetXaxis()->SetNdivisions(16, false);
-    frame->GetYaxis()->SetTitle("Normalized counts");
+    frame->GetYaxis()->SetTitle("Normalized Counts");
     frame->GetYaxis()->SetNdivisions(2);
+
+    canvas->cd();
     frame->Draw();
 
-    // Draw the secondary axis
-    TGaxis* secondaryAxis = new TGaxis(0, 105, 256, 105, 0, 256*smxAmCaltoE/1e3, 520, "-");
-    secondaryAxis->SetTitle("Pulse charge (ke)");
-    secondaryAxis->SetLabelSize(0.035); // Smaller label size
-    secondaryAxis->SetTitleSize(0.035); // Smaller title size
-    secondaryAxis->SetLabelFont(42);     // Standard ROOT font
-    secondaryAxis->SetTitleFont(42);
-    secondaryAxis->Draw();
-
+    // Return the canvas with the combined plot
     return canvas;
 }
+
+
 
 
 int smxScurveFit::getChannel() const {
